@@ -1,0 +1,18 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 82dfe8f..5ccff1e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -29,8 +29,11 @@ else()
+     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+-    add_subdirectory_checked(${CMAKE_CURRENT_SOURCE_DIR}/external/glfw)
+-    target_link_libraries(GLFWPP INTERFACE glfw)
++    
++    if (NOT TARGET glfw)
++      add_subdirectory_checked(${CMAKE_CURRENT_SOURCE_DIR}/external/glfw)
++      target_link_libraries(GLFWPP INTERFACE glfw)
++    endif() 
+ endif()
+ 
+ #Build examples
