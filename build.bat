@@ -22,8 +22,8 @@ if "%1" == "make" (
 )
 
 if "%clean%" == "1" (
-  if exist %build_folder% (
-    RMDIR ./%build_folder%
+  if exist "%build_folder%" (
+    RMDIR "./%build_folder%" /S
   )
 )
 

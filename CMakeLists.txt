@@ -7,7 +7,6 @@ project(ZeroCodeNodes)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-DO3 -DNDEBUG /EHsc")
 
-
 add_executable(Main main.cpp)
 
 find_package(Mathter REQUIRED)
@@ -15,19 +14,29 @@ find_package(OpenGL REQUIRED)
 find_package(imgui REQUIRED)
 find_package(GLEW REQUIRED)
 
-# GLFW C++ wrapper
 include(FetchContent)
-set(glfwpp_patch_1 git apply ${CMAKE_CURRENT_SOURCE_DIR}/deps_modyfications/glfwpp_cmake_glfw_path.diff)
+
+# GLFW C++ wrapper
+set(glfwpp_patch_1 git apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/deps_modyfications/glfwpp_cmake_glfw_path.diff)
 set(GLFWPP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(GLFWPP
   GIT_REPOSITORY https://github.com/janekb04/glfwpp
   GIT_TAG 17b0ca06799fec64f63f5006fe45209ce33aace0
   PATCH_COMMAND ${glfwpp_patch_1}
 )
-FetchContent_MakeAvailable(GLFWPP)
 
-target_link_libraries(Main PRIVATE OpenGL::GL)
-target_link_libraries(Main PRIVATE GLEW::GLEW)
-target_link_libraries(Main PRIVATE imgui::imgui)
-target_link_libraries(Main PRIVATE Mathter::Mathter)
-target_link_libraries(Main PRIVATE GLFWPP)
+# ImGUI-base nodes
+set(IMNODES_STANDALONE_PROJECT OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(imnodes
+  GIT_REPOSITORY https://github.com/Nelarius/imnodes
+  GIT_TAG 8563e1655bd9bb1f249e6552cc6274d506ee788b
+)
+
+FetchContent_MakeAvailable(GLFWPP imnodes)
+
+set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes)
+
+set(INTERNAL_DEPS ${CMAKE_SOURCE_DIR}/src/node.cc ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
+add_library(internal_lib STATIC ${INTERNAL_DEPS})
+
+target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS} internal_lib)
