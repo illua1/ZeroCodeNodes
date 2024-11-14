@@ -4,6 +4,7 @@
 #include <string>
 
 #include "src/ZCN_node.hh"
+#include "src/ZCN_node_draw.hh"
 
 /*
 
@@ -57,8 +58,27 @@ int main()
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   ImGui::StyleColorsDark();
 
+  ImFontConfig font_config; 
+  font_config.OversampleH = 1;
+  font_config.OversampleV = 1; 
+  font_config.PixelSnapH = 1;
+
+  static const ImWchar ranges[] =
+  {
+    0x0020, 0x00FF, // Basic Latin + Latin Supplement
+    0x0400, 0x044F, // Cyrillic
+    0,
+  };
+
+  io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Tahoma.ttf", 16.0f, &font_config, ranges);
+
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version.c_str());
+
+  zcn::register_node_types();
+
+  zcn::NodeTree tree;
+  zcn::add_node_to_tree(tree, "Text Input");
 
   while (!window.shouldClose()) {
 
@@ -74,47 +94,10 @@ int main()
     ImGui::Text("Ohahola cacacola %d", 123);
     ImGui::End();
 
-    ImNodes::BeginNodeEditor();
-    
+    zcn::nodes::draw(tree);
 
-    ImNodes::BeginNode(0);
-
-    ImNodes::BeginNodeTitleBar();
-    ImGui::TextUnformatted("Halo ainge ladu");
-    ImNodes::EndNodeTitleBar();
-
-    ImGui::Text("AAAAAA");
-    ImGui::Dummy(ImVec2(80.0f, 45.0f));
-
-    ImNodes::BeginInputAttribute(1);
-    ImGui::Text("AAA");
-    ImNodes::EndInputAttribute();
-
-    ImNodes::BeginOutputAttribute(2);
-    ImGui::Text("output pin");
-    ImNodes::EndOutputAttribute();
-    
-    ImNodes::EndNode();
-
-    ImNodes::BeginNode(1);
-    ImGui::Text("AAAAAA");
-    ImGui::Dummy(ImVec2(80.0f, 45.0f));
-
-    ImNodes::BeginInputAttribute(3);
-    ImGui::Text("AAA");
-    ImNodes::EndInputAttribute();
-
-    ImNodes::BeginOutputAttribute(4);
-    ImGui::Text("output pin");
-    ImNodes::EndOutputAttribute();
-    
-    ImNodes::EndNode();
-    
-    ImNodes::EndNodeEditor();
-
-
-    glfw::pollEvents();
     ImGui::Render();
+    glfw::pollEvents();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
   }

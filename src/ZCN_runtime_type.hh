@@ -1,20 +1,10 @@
 #pragma once
 
 #include <string>
+#include <variant>
 
 namespace zcn {
 
-class Type {
- public:
-  
-};
-
-template<typename T>
-const Type &get_type_of();
-
-extern template const Type &get_type_of<bool>();
-extern template const Type &get_type_of<int>();
-extern template const Type &get_type_of<float>();
-extern template const Type &get_type_of<std::string>();
+using RData = std::variant<bool, int, float, std::string>;
 
 }

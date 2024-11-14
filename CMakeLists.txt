@@ -36,7 +36,13 @@ FetchContent_MakeAvailable(GLFWPP imnodes)
 
 set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes)
 
-set(INTERNAL_DEPS ${CMAKE_SOURCE_DIR}/src/node.cc ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
+set(INTERNAL_DEPS ${CMAKE_SOURCE_DIR}/src/node.cc ${CMAKE_SOURCE_DIR}/src/node_draw.cc ${CMAKE_SOURCE_DIR}/src/nodes/node_text_input.cc)
 add_library(internal_lib STATIC ${INTERNAL_DEPS})
 
+set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/nodes/node_text_input.cc)
+add_library(nodes_lib STATIC ${INTERNAL_NODES})
+target_link_libraries(nodes_lib PRIVATE ${EXTERNAL_DEPS})
+
+target_link_libraries(internal_lib PRIVATE ${EXTERNAL_DEPS})
+target_link_libraries(nodes_lib PRIVATE ${EXTERNAL_DEPS})
 target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS} internal_lib)

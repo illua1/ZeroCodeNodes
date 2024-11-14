@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <functional>
+#include <memory>
 
 #include "ZCN_runtime_type.hh"
 
@@ -16,36 +18,71 @@ enum class DataType : int8_t {
 template<typename T>
 inline DataType static_type_to_type();
 
-class NodeDeclaration {
- protected:
-  std::vector<std::pair<DataType, std::string>> inputs_;
-  std::vector<std::pair<DataType, std::string>> outputs_;
-  std::string ui_name_;
-  
+class DeclarationContext {
  public:
-  void add_input(const DataType type, std::string name);
-
+  virtual ~DeclarationContext() = default;
+ 
   template<typename T>
   void add_input(std::string name);
-
-  void add_output(const DataType type, std::string name);
-
   template<typename T>
   void add_output(std::string name);
 
-  void set_name(std::string name);
+  virtual void add_input(const DataType type, std::string name) = 0;
+  virtual void add_output(const DataType type, std::string name) = 0;
 };
 
-class NodeContext {
-  
+class ExecutionContext {
+ public:
+  virtual ~ExecutionContext() = default;
+
+  template<typename T>
+  T get_input(const std::string name);
+
+  template<typename T>
+  void set_output(const std::string name, T value);
+
+  virtual RData get_input(const std::string name) = 0;
+  virtual void set_output(const std::string name, RData value) = 0;
+};
+
+class DrawContext {
+ public:
+  virtual ~DrawContext() = default;
+
+  virtual void text_input(std::string &text) = 0;
+  virtual void value_input(int &value) = 0;
+  virtual void list_input(const std::vector<std::string> list, int &index) = 0;
 };
 
 class Node {
  public:
-  virtual ~Node() = 0;
-  virtual void declaration(NodeDeclaration &decl) const = 0;
-  virtual void execute() const = 0;
+  virtual ~Node() = default;
+  virtual void declare(DeclarationContext &decl) const = 0;
+  virtual void execute(ExecutionContext &context) const = 0;
+  virtual void draw(DrawContext &context) = 0;
 };
+
+using NodePtr = std::unique_ptr<Node>;
+
+struct NodeTree {
+  int total_uid = 0;
+  std::vector<int> nodes_uid;
+  std::vector<std::string> node_labels;
+  std::vector<NodePtr> nodes;
+  
+  std::vector<std::pair<int, int>> links;
+};
+
+}
+
+namespace zcn {
+
+int add_node_to_tree(NodeTree &tree, const std::string node_type);
+void drop_node_from_tree(NodeTree &tree, const int node_index);
+
+}
+
+namespace zcn {
 
 template<typename T>
 inline DataType static_type_to_type()
@@ -61,31 +98,40 @@ inline DataType static_type_to_type()
   }
 }
 
-void NodeDeclaration::add_input(const DataType type, std::string name)
-{
-  this->inputs_.push_back(std::pair{type, std::move(name)});
-}
-
 template<typename T>
-void NodeDeclaration::add_input(std::string name)
+void DeclarationContext::add_input(std::string name)
 {
   this->add_input(static_type_to_type<T>(), std::move(name));
 }
 
-void NodeDeclaration::add_output(const DataType type, std::string name)
-{
-  this->outputs_.push_back(std::pair{type, std::move(name)});
-}
-
 template<typename T>
-void NodeDeclaration::add_output(std::string name)
+void DeclarationContext::add_output(std::string name)
 {
   this->add_output(static_type_to_type<T>(), std::move(name));
 }
 
-void NodeDeclaration::set_name(std::string name)
+template<typename T>
+T ExecutionContext::get_input(std::string name)
 {
-  this->ui_name_ = std::move(name);
+  return *std::get_if<T>(&this->get_input(name));
 }
+
+template<typename T>
+void ExecutionContext::set_output(std::string name, T value)
+{
+  this->set_output(name, RData(std::move(value)));
+}
+
+}
+
+namespace zcn {
+
+void register_node_type(std::string type_name, std::function<NodePtr()> construct);
+
+NodePtr create_node_by_name(const std::string type_name);
+
+void register_text_input_node_type();
+
+void register_node_types();
 
 }
