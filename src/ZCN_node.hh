@@ -50,7 +50,7 @@ class DrawContext {
   virtual ~DrawContext() = default;
 
   virtual void text_input(std::string &text) = 0;
-  virtual void value_input(int &value) = 0;
+  virtual void value_input(float &value) = 0;
   virtual void list_input(const std::vector<std::string> list, int &index) = 0;
 };
 
@@ -67,6 +67,7 @@ using NodePtr = std::unique_ptr<Node>;
 struct NodeTree {
   int total_uid = 0;
   std::vector<int> nodes_uid;
+  std::vector<std::vector<int>> node_sockets_uid;
   std::vector<std::string> node_labels;
   std::vector<NodePtr> nodes;
   
@@ -121,17 +122,5 @@ void ExecutionContext::set_output(std::string name, T value)
 {
   this->set_output(name, RData(std::move(value)));
 }
-
-}
-
-namespace zcn {
-
-void register_node_type(std::string type_name, std::function<NodePtr()> construct);
-
-NodePtr create_node_by_name(const std::string type_name);
-
-void register_text_input_node_type();
-
-void register_node_types();
 
 }
