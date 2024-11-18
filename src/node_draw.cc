@@ -96,7 +96,6 @@ class ImNodesDeclarationContext : public DeclarationContext {
 
 void draw(NodeTree &tree)
 {
-
   if (ImGui::BeginMenuBar()) {
 
     bool openpopuptemp = false;

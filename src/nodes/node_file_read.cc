@@ -4,13 +4,13 @@
 #include <string>
 #include <memory>
 
-namespace zcn::node::text_input {
+namespace zcn::node::file_input {
 
-class TextInputNode : public Node {
+class FileInputNode : public Node {
  public:
-  TextInputNode() = default;
+  FileInputNode() = default;
 
-  ~TextInputNode() override = default;
+  ~FileInputNode() override = default;
 
   void declare(DeclarationContext &decl) const override
   {
@@ -33,7 +33,7 @@ namespace zcn {
 void register_node_file_read_node_type()
 {
   register_node_type("Прочитать файл", []() -> NodePtr {
-    return std::make_unique<node::text_input::TextInputNode>();
+    return std::make_unique<node::file_input::FileInputNode>();
   });
 }
 

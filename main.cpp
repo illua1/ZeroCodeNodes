@@ -78,7 +78,7 @@ int main()
   zcn::register_node_types();
 
   zcn::NodeTree tree;
-  zcn::add_node_to_tree(tree, "Ввод текста");
+  // zcn::add_node_to_tree(tree, "Ввод текста");
 
   while (!window.shouldClose()) {
 

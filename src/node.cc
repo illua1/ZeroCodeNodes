@@ -1,6 +1,7 @@
 
 #include "ZCN_node.hh"
 
+#include <cassert>
 #include <unordered_map>
 
 namespace zcn {
@@ -61,6 +62,7 @@ static std::unordered_map<std::string, std::function<NodePtr()>> &node_types()
 
 void register_node_type(std::string type_name, std::function<NodePtr()> construct)
 {
+  assert(node_types().find(type_name) == node_types().end());
   node_types()[std::move(type_name)] = std::move(construct);
 }
 

@@ -7,7 +7,7 @@
 namespace zcn::node::text_input {
 
 class TextInputNode : public Node {
-  std::string value_ = "Текст";
+  std::string value_ = "Мой текст";
 
  public:
   TextInputNode() = default;
@@ -37,7 +37,7 @@ namespace zcn {
 void register_node_text_input_node_type()
 {
   register_node_type("Ввод текста", []() -> NodePtr {
-    return std::make_unique<node::text_input::TextInputNode>();
+    return NodePtr(std::make_unique<node::text_input::TextInputNode>());
   });
 }
 
