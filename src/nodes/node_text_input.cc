@@ -34,7 +34,7 @@ class TextInputNode : public Node {
 
 namespace zcn {
 
-void register_text_input_node_type()
+void register_node_text_input_node_type()
 {
   register_node_type("Ввод текста", []() -> NodePtr {
     return std::make_unique<node::text_input::TextInputNode>();
