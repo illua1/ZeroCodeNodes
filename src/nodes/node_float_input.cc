@@ -7,7 +7,7 @@
 namespace zcn::node::float_input {
 
 class FloatInputNode : public Node {
-  float value_ = 0.0f;
+  float value_ = 100.0f;
 
  public:
   FloatInputNode() = default;
@@ -16,7 +16,7 @@ class FloatInputNode : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_output<std::string>("Зачение");
+    decl.add_output<std::string>("Процент");
   }
 
   void draw(DrawContext &context) override
@@ -26,7 +26,7 @@ class FloatInputNode : public Node {
 
   void execute(ExecutionContext &context) const override
   {
-    context.set_output<float>("Значение", this->value_);
+    context.set_output<float>("Процент", this->value_);
   }
 };
 
@@ -36,7 +36,7 @@ namespace zcn {
 
 void register_node_float_input_node_type()
 {
-  register_node_type("Ввод значения", []() -> NodePtr {
+  register_node_type("Ввод процента", []() -> NodePtr {
     return std::make_unique<node::float_input::FloatInputNode>();
   });
 }

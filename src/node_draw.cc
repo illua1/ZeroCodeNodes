@@ -32,7 +32,7 @@ class ImNodesDrawContext : public DrawContext {
 
   void value_input(float &value) override
   {
-    
+    ImGui::SliderFloat("", &value, 0.0f, 100.0f, "%.2f%%");
   }
 
   void list_input(const std::vector<std::string> list, int &index) override
