@@ -70,6 +70,15 @@ void drop_link_from_tree(NodeTree &tree, int link_uid)
 
 namespace zcn {
 
+void add_nodes_for_path(NodeTree &tree, const std::string path)
+{
+  // add_node_to_tree(tree, "")
+}
+
+}
+
+namespace zcn {
+
 static std::unordered_map<std::string, std::function<NodePtr()>> &node_types()
 {
   static std::unordered_map<std::string, std::function<NodePtr()>> types;

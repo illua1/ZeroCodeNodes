@@ -89,6 +89,12 @@ void drop_link_from_tree(NodeTree &tree, int link_uid);
 
 namespace zcn {
 
+void add_nodes_for_path(NodeTree &tree, std::string path);
+
+}
+
+namespace zcn {
+
 template<typename T>
 inline DataType static_type_to_type()
 {

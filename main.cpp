@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <algorithm>
+#include <algorithm>
 #include <string>
 
 #include "src/ZCN_node.hh"
@@ -45,7 +46,7 @@ int main()
 {
   [[maybe_unused]] const auto GLFW = glfw::init();
 
-  glfw::Window window{640, 480, "Zero Code Nodes"};
+  glfw::Window window(640, 480, "Zero Code Nodes");
 
   glfw::makeContextCurrent(window);
 
@@ -80,6 +81,12 @@ int main()
   zcn::NodeTree tree;
   // zcn::add_node_to_tree(tree, "Ввод текста");
 
+  window.dropEvent.setCallback([&](glfw::Window &/*window*/, const std::vector<const char*> &list) {
+    for (const char *path : list) {
+      zcn::add_nodes_for_path(tree, std::string(path));
+    }
+  });
+
   while (!window.shouldClose()) {
 
     const double time = glfw::getTime();
@@ -98,6 +105,7 @@ int main()
 
     ImGui::Render();
     glfw::pollEvents();
+
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
   }
