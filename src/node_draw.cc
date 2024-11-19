@@ -163,10 +163,12 @@ void draw(NodeTree &tree)
 
   ImNodes::EndNodeEditor();
 
-  std::pair<int, int> link;
-  if (ImNodes::IsLinkCreated(&link.first, &link.second)){
-    tree.links_uid.push_back(tree.total_uid++);
-    tree.links.push_back(link);
+  if (std::pair<int, int> link; ImNodes::IsLinkCreated(&link.first, &link.second)){
+    zcn::add_link_from_tree(tree, link);
+  }
+
+  if (int link_uid; ImNodes::IsLinkHovered(&link_uid) && ImGui::IsKeyPressed(ImGuiKey_MouseRight)) {
+    zcn::drop_link_from_tree(tree, link_uid);
   }
 }
 

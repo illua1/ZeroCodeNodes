@@ -79,8 +79,11 @@ struct NodeTree {
 
 namespace zcn {
 
-int add_node_to_tree(NodeTree &tree, const std::string node_type);
+int add_node_to_tree(NodeTree &tree, std::string node_type);
 void drop_node_from_tree(NodeTree &tree, const int node_index);
+
+int add_link_from_tree(NodeTree &tree, std::pair<int, int> link);
+void drop_link_from_tree(NodeTree &tree, int link_uid);
 
 }
 

@@ -50,6 +50,22 @@ void drop_node_from_tree(NodeTree &tree, const int node_index)
   tree.node_labels.erase(tree.node_labels.begin() + node_index);
 }
 
+int add_link_from_tree(NodeTree &tree, std::pair<int, int> link)
+{
+  const int link_uid = tree.total_uid++;
+  tree.links_uid.push_back(link_uid);
+  tree.links.push_back(link);
+  return link_uid;
+}
+
+void drop_link_from_tree(NodeTree &tree, int link_uid)
+{
+  const int link_i = std::distance(tree.links_uid.begin(), std::find(tree.links_uid.begin(), tree.links_uid.end(), link_uid));
+  assert(link_i < tree.links_uid.size());
+  tree.links.erase(tree.links.begin() + link_i);
+  tree.links_uid.erase(tree.links_uid.begin() + link_i);
+}
+
 }
 
 namespace zcn {
