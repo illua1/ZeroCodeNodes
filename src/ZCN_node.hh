@@ -71,6 +71,7 @@ struct NodeTree {
   std::vector<std::string> node_labels;
   std::vector<NodePtr> nodes;
   
+  std::vector<int> links_uid;
   std::vector<std::pair<int, int>> links;
 };
 

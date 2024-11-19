@@ -156,7 +156,18 @@ void draw(NodeTree &tree)
     ImNodes::EndNode();
   }
 
+  for (int link_index = 0; link_index < tree.links.size(); link_index++) {
+    const std::pair<int, int> link = tree.links[link_index];
+    ImNodes::Link(tree.links_uid[link_index], link.first, link.second);
+  }
+
   ImNodes::EndNodeEditor();
+
+  std::pair<int, int> link;
+  if (ImNodes::IsLinkCreated(&link.first, &link.second)){
+    tree.links_uid.push_back(tree.total_uid++);
+    tree.links.push_back(link);
+  }
 }
 
 }
