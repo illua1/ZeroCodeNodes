@@ -14,4 +14,4 @@ Coursework
  - [ ] Tree execution.
  - [ ] Execution logs list, value viewing.
  - [ ] Pie menu, gizmos in editor.
- - Local storage of trees, browser of premade trees.
+ - [ ] Local storage of trees, browser of premade trees.
