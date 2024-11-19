@@ -16,7 +16,7 @@ class FloatInputNode : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_output<std::string>("Процент");
+    decl.add_output<float>("Процент");
   }
 
   void draw(DrawContext &context) override
