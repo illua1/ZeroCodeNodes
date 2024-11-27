@@ -19,8 +19,6 @@ class TextConcatinationNode : public Node {
     decl.add_output<std::string>("Сумма");
   }
 
-  void draw(DrawContext &/*context*/) override {}
-
   void execute(ExecutionContext &context) const override
   {
     const std::string a = context.get_input<std::string>("Префикс");

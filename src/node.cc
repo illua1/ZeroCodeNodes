@@ -24,6 +24,8 @@ class CreationDeclarationContext : public DeclarationContext {
     const int input_uid = total_uid_++;
     uids_.push_back(input_uid);
   }
+
+  void add_data(const DataType type, std::string name) override {}
 };
 
 int add_node_to_tree(NodeTree &tree, const std::string node_type)
@@ -64,6 +66,11 @@ void drop_link_from_tree(NodeTree &tree, int link_uid)
   assert(link_i < tree.links_uid.size());
   tree.links.erase(tree.links.begin() + link_i);
   tree.links_uid.erase(tree.links_uid.begin() + link_i);
+}
+
+TreePtr new_tree()
+{
+  return std::make_unique<NodeTree>();
 }
 
 }

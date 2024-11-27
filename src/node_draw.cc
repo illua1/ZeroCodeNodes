@@ -10,64 +10,120 @@
 
 namespace zcn::nodes {
 
-class ImNodesDrawContext : public DrawContext {
- public:
-  ImNodesDrawContext(const std::string &label) {
-    ImNodes::BeginNodeTitleBar();
-    ImGui::TextUnformatted(label.c_str());
-    ImNodes::EndNodeTitleBar();
-
-  }
-
-  ~ImNodesDrawContext() override = default;
-
-  void text_input(std::string &text) override
-  {
-    char buffer[100];
-    std::strncpy(buffer, text.c_str(), std::min<int>(sizeof(buffer), text.size() + 1));
-    if (ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
-      text = std::move(std::string(std::string_view(buffer)));
-    }
-  }
-
-  void value_input(float &value) override
-  {
-    ImGui::SliderFloat("", &value, 0.0f, 100.0f, "%.2f%%");
-  }
-
-  void list_input(const std::vector<std::string> list, int &index) override
-  {
-    
-  }
-};
-
 class ImNodesDeclarationContext : public DeclarationContext {
   int counter_ = 0;
-  const std::vector<int> &socket_uids_;
+  NodeTree &tree_;
+  const int node_index_;
+
  public:
-  ImNodesDeclarationContext(const std::vector<int> &socket_uids) : socket_uids_(socket_uids) {}
+  ImNodesDeclarationContext(NodeTree &tree, const int node_index) : tree_(tree), node_index_(node_index)
+  {
+    ImNodes::BeginNodeTitleBar();
+    ImGui::TextUnformatted(tree_.node_labels[node_index].c_str());
+    ImNodes::EndNodeTitleBar();
+  }
+
   ~ImNodesDeclarationContext() override = default;
 
   void add_input(const DataType type, std::string name) override
   {
-    const int socket_uid = socket_uids_[counter_++];
+    const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
     
+    const std::string socket_path = "nodes[" + std::to_string(tree_.nodes_uid[node_index_]) + "].[" + std::to_string(socket_uid) + "]";
+
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginInputAttribute(socket_uid, pin_for_type(type));
-    ImGui::TextUnformatted(name.c_str());
+    // ImGui::TextUnformatted(name.c_str());
+    
+    switch (type) {
+      case DataType::Int: {
+        auto [value, _] = tree_.values.try_emplace(socket_path, RData(int(0)));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
+        printf("Not implemented yet.\n");
+        break;
+      }
+      case DataType::Float: {
+        auto [value, _] = tree_.values.try_emplace(socket_path, RData(float(0)));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        auto &typed_value = std::get<float>(value->second);
+
+        ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
+        break;
+      }
+      case DataType::Text: {
+        auto [value, _] = tree_.values.try_emplace(socket_path, RData(std::string()));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        auto &typed_value = std::get<std::string>(value->second);
+
+        char buffer[100];
+        std::strncpy(buffer, typed_value.c_str(), std::min<int>(sizeof(buffer), typed_value.size() + 1));
+        if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+          typed_value = std::move(std::string(std::string_view(buffer)));
+        }
+        break;
+      }
+    }
+    
     ImNodes::EndInputAttribute();
     ImNodes::PopColorStyle();
   }
 
   void add_output(const DataType type, std::string name) override
   {
-    const int socket_uid = socket_uids_[counter_++];
+    const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
 
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginOutputAttribute(socket_uid, pin_for_type(type));
     ImGui::TextUnformatted(name.c_str());
     ImNodes::EndOutputAttribute();
     ImNodes::PopColorStyle();
+  }
+
+  void add_data(const DataType type, const std::string name) override
+  {
+    const std::string node_path = "nodes[" + std::to_string(tree_.nodes_uid[node_index_]) + "]" + "." + name;
+    switch (type) {
+      case DataType::Int: {
+        auto [value, _] = tree_.values.try_emplace(node_path, RData(int(0)));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
+        printf("Not implemented yet.\n");
+        break;
+      }
+      case DataType::Float: {
+        auto [value, _] = tree_.values.try_emplace(node_path, RData(float(0)));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        auto &typed_value = std::get<float>(value->second);
+        
+        ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 100.0f);
+        break;
+      }
+      case DataType::Text: {
+        auto [value, _] = tree_.values.try_emplace(node_path, RData(std::string()));
+        if (value == tree_.values.end()) {
+          break;
+        }
+        auto &typed_value = std::get<std::string>(value->second);
+        
+        char buffer[100];
+        std::strncpy(buffer, typed_value.c_str(), std::min<int>(sizeof(buffer), typed_value.size() + 1));
+        if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+          typed_value = std::move(std::string(std::string_view(buffer)));
+        }
+        break;
+      }
+    }
   }
 
  protected:
@@ -129,7 +185,6 @@ void draw(NodeTree &tree)
   }
 
   if (ImGui::BeginPopup("add node")) {
-    const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
     for (const std::string node_type : zcn::all_node_types()) {
       if (ImGui::MenuItem(node_type.c_str())) {
         const int node_index = zcn::add_node_to_tree(tree, node_type);
@@ -146,10 +201,7 @@ void draw(NodeTree &tree)
     ImNodes::BeginNode(tree.nodes_uid[node_index]);
     ImGui::PushItemWidth(120.0f);
 
-    ImNodesDrawContext draw_context(tree.node_labels[node_index]);
-    node->draw(draw_context);
-
-    ImNodesDeclarationContext declaration(tree.node_sockets_uid[node_index]);
+    ImNodesDeclarationContext declaration(tree, node_index);
     node->declare(declaration);
     
     ImGui::PopItemWidth();

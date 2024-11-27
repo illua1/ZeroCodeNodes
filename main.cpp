@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include <algorithm>
-#include <algorithm>
+#include <unordered_set>
 #include <string>
 
 #include "src/ZCN_node.hh"
@@ -42,6 +42,27 @@ using float3x3 = math::Matrix<float, 3, 3>;
 
 static const std::string glsl_version = "#version 130";
 
+struct MetaTree {
+  zcn::TreePtr tree = zcn::new_tree();
+  std::string name;
+  std::string internal_name;
+  ImNodesEditorContext *context = ImNodes::EditorContextCreate();
+
+  MetaTree(std::string custom_name, std::string custom_internal_name): name(std::move(custom_name)), internal_name(std::move(custom_internal_name)) {}
+
+  MetaTree(MetaTree &&other) : tree(std::move(other.tree)), name(std::move(other.name)), internal_name(std::move(other.internal_name)), context(other.context)
+  {
+    other.context = nullptr;
+  }
+  
+  ~MetaTree()
+  {
+    if (context != nullptr) {
+      ImNodes::EditorContextFree(context);
+    }
+  }
+};
+
 int main()
 {
   [[maybe_unused]] const auto GLFW = glfw::init();
@@ -76,14 +97,32 @@ int main()
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
-  zcn::register_node_types();
+  ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
 
-  zcn::NodeTree tree;
-  // zcn::add_node_to_tree(tree, "Ввод текста");
+  std::unordered_set<std::string> tree_names;
+  std::unordered_set<std::string> internal_tree_names;
+
+  const auto new_tree_name = [](std::unordered_set<std::string> &tree_names, std::string start) -> std::string {
+    if (tree_names.insert(start).second) {
+      return std::move(start);
+    }
+    const std::string separator = (start.back() == '.' ? "" : ".");
+    int iter = 1;
+    while (!tree_names.insert(start + separator + std::to_string(iter)).second) {
+      iter++;
+    }
+    return start + separator + std::to_string(iter);
+  };
+
+  zcn::register_node_types();
+  std::vector<MetaTree> session;
+  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
 
   window.dropEvent.setCallback([&](glfw::Window &/*window*/, const std::vector<const char*> &list) {
     for (const char *path : list) {
-      zcn::add_nodes_for_path(tree, std::string(path));
+      // zcn::add_nodes_for_path(tree, std::string(path));
     }
   });
 
@@ -97,11 +136,46 @@ int main()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Main form");
-    ImGui::Text("Ohahola cacacola %d", 123);
+    ImGui::Begin("Программы", nullptr, ImGuiWindowFlags_MenuBar);
+    
+    if (ImGui::BeginListBox("Список программ"))
+    {
+      for (MetaTree &tree : session) {
+
+        char buffer[100];
+        std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+        if (ImGui::InputText(tree.internal_name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+          tree_names.erase(tree.name);
+          tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+        }
+        
+        if (ImGui::Button("Удалить")) {
+        
+        }
+        
+        ImGui::Separator();
+      }
+      ImGui::EndListBox();
+    }
+
     ImGui::End();
 
-    zcn::nodes::draw(tree);
+    for (MetaTree &tree : session) {
+      ImGui::Begin(tree.internal_name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+      
+      ImGui::BeginMenuBar();
+      char buffer[100];
+      std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+      if (ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+        tree_names.erase(tree.name);
+        tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+      }
+      ImGui::EndMenuBar();
+
+      ImNodes::EditorContextSet(tree.context);
+      zcn::nodes::draw(*tree.tree);
+      ImGui::End();
+    }
 
     ImGui::Render();
     glfw::pollEvents();
@@ -109,6 +183,8 @@ int main()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
   }
+
+  ImNodes::PopAttributeFlag();
 
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();

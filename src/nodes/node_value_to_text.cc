@@ -18,8 +18,6 @@ class ValueToTextNode : public Node {
     decl.add_output<std::string>("Текст");
   }
 
-  void draw(DrawContext &/*context*/) override {}
-
   void execute(ExecutionContext &context) const override
   {
     context.set_output<std::string>("Текст", std::to_string(context.get_input<float>("Значение")));

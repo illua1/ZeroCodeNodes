@@ -18,8 +18,6 @@ class FileInputNode : public Node {
     decl.add_output<std::string>("Текст");
   }
 
-  void draw(DrawContext &/*context*/) override {}
-
   void execute(ExecutionContext &context) const override
   {
     // context.set_output<std::string>("Текст", this->value_);

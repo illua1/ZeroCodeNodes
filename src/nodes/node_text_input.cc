@@ -7,8 +7,6 @@
 namespace zcn::node::text_input {
 
 class TextInputNode : public Node {
-  std::string value_ = "Мой текст";
-
  public:
   TextInputNode() = default;
 
@@ -16,17 +14,14 @@ class TextInputNode : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_output<std::string>("Текст");
-  }
+    decl.add_data(DataType::Text, "Текст");
 
-  void draw(DrawContext &context) override
-  {
-    context.text_input(this->value_);
+    decl.add_output<std::string>("Текст");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.set_output<std::string>("Текст", this->value_);
+    context.set_output<std::string>("Текст", "AAA");
   }
 };
 

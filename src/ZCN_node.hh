@@ -26,9 +26,12 @@ class DeclarationContext {
   void add_input(std::string name);
   template<typename T>
   void add_output(std::string name);
+  template<typename T>
+  void add_data(std::string name);
 
   virtual void add_input(const DataType type, std::string name) = 0;
   virtual void add_output(const DataType type, std::string name) = 0;
+  virtual void add_data(const DataType type, std::string name) = 0;
 };
 
 class ExecutionContext {
@@ -45,21 +48,11 @@ class ExecutionContext {
   virtual void set_output(const std::string name, RData value) = 0;
 };
 
-class DrawContext {
- public:
-  virtual ~DrawContext() = default;
-
-  virtual void text_input(std::string &text) = 0;
-  virtual void value_input(float &value) = 0;
-  virtual void list_input(const std::vector<std::string> list, int &index) = 0;
-};
-
 class Node {
  public:
   virtual ~Node() = default;
   virtual void declare(DeclarationContext &decl) const = 0;
   virtual void execute(ExecutionContext &context) const = 0;
-  virtual void draw(DrawContext &context) = 0;
 };
 
 using NodePtr = std::unique_ptr<Node>;
@@ -73,7 +66,13 @@ struct NodeTree {
   
   std::vector<int> links_uid;
   std::vector<std::pair<int, int>> links;
+
+  std::unordered_map<std::string, RData> values;
 };
+
+using TreePtr = std::unique_ptr<NodeTree>;
+
+TreePtr new_tree();
 
 }
 
@@ -107,6 +106,12 @@ inline DataType static_type_to_type()
   if constexpr (std::is_same_v<T, std::string>) {
     return DataType::Text;
   }
+}
+
+template<typename T>
+void DeclarationContext::add_data(std::string name)
+{
+  this->add_data(static_type_to_type<T>(), std::move(name));
 }
 
 template<typename T>
