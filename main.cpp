@@ -55,6 +55,13 @@ struct MetaTree {
     other.context = nullptr;
   }
   
+  MetaTree &operator =(MetaTree &&other)
+  {
+    this->~MetaTree();
+    new(this) MetaTree(std::move(other));
+    return *this;
+  }
+  
   ~MetaTree()
   {
     if (context != nullptr) {
@@ -138,21 +145,30 @@ int main()
 
     ImGui::Begin("Программы", nullptr, ImGuiWindowFlags_MenuBar);
     
+    const MetaTree *tree_to_delete = nullptr;
+    const MetaTree *new_tree = nullptr;
+
     if (ImGui::BeginListBox("Список программ"))
     {
+      if (ImGui::Button("Добавить")) {
+        session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+        new_tree = &session.back();
+      }
+
       for (MetaTree &tree : session) {
 
         char buffer[100];
         std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
-        if (ImGui::InputText(tree.internal_name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+        if (const std::string name_input_label = "###Name" + tree.internal_name;
+            ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
           tree_names.erase(tree.name);
           tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
         }
-        
-        if (ImGui::Button("Удалить")) {
-        
+
+        if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+          tree_to_delete = &tree;
         }
-        
+
         ImGui::Separator();
       }
       ImGui::EndListBox();
@@ -162,7 +178,11 @@ int main()
 
     for (MetaTree &tree : session) {
       ImGui::Begin(tree.internal_name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
-      
+      if (new_tree == &tree) {
+        ImGui::SetWindowPos({500, 500});
+        ImGui::SetWindowSize({500, 500});
+      }
+
       ImGui::BeginMenuBar();
       char buffer[100];
       std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
@@ -175,6 +195,11 @@ int main()
       ImNodes::EditorContextSet(tree.context);
       zcn::nodes::draw(*tree.tree);
       ImGui::End();
+    }
+
+    if (tree_to_delete != nullptr) {
+      tree_names.erase(tree_to_delete->name);
+      session.erase(session.begin() + std::distance<const MetaTree *>(&session[0], tree_to_delete));
     }
 
     ImGui::Render();
