@@ -1,5 +1,6 @@
 
 #include <cassert>
+#include <unordered_set>
 #include <unordered_map>
 
 #include "ZCN_node.hh"
@@ -14,9 +15,10 @@ class ImNodesDeclarationContext : public DeclarationContext {
   int counter_ = 0;
   NodeTree &tree_;
   const int node_index_;
+  const std::unordered_set<int> &linked_sockets_;
 
  public:
-  ImNodesDeclarationContext(NodeTree &tree, const int node_index) : tree_(tree), node_index_(node_index)
+  ImNodesDeclarationContext(NodeTree &tree, const int node_index, const std::unordered_set<int> &linked_sockets) : tree_(tree), node_index_(node_index), linked_sockets_(linked_sockets)
   {
     ImNodes::BeginNodeTitleBar();
     ImGui::TextUnformatted(tree_.node_labels[node_index].c_str());
@@ -35,40 +37,44 @@ class ImNodesDeclarationContext : public DeclarationContext {
     ImNodes::BeginInputAttribute(socket_uid, pin_for_type(type));
     // ImGui::TextUnformatted(name.c_str());
     
-    switch (type) {
-      case DataType::Int: {
-        auto [value, _] = tree_.values.try_emplace(socket_path, RData(int(0)));
-        if (value == tree_.values.end()) {
+    if (linked_sockets_.find(socket_uid) == linked_sockets_.end()) {
+      switch (type) {
+        case DataType::Int: {
+          auto [value, _] = tree_.values.try_emplace(socket_path, RData(int(0)));
+          if (value == tree_.values.end()) {
+            break;
+          }
+          [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
+          printf("Not implemented yet.\n");
           break;
         }
-        [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
-        printf("Not implemented yet.\n");
-        break;
-      }
-      case DataType::Float: {
-        auto [value, _] = tree_.values.try_emplace(socket_path, RData(float(0)));
-        if (value == tree_.values.end()) {
-          break;
-        }
-        auto &typed_value = std::get<float>(value->second);
+        case DataType::Float: {
+          auto [value, _] = tree_.values.try_emplace(socket_path, RData(float(0)));
+          if (value == tree_.values.end()) {
+            break;
+          }
+          auto &typed_value = std::get<float>(value->second);
 
-        ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
-        break;
-      }
-      case DataType::Text: {
-        auto [value, _] = tree_.values.try_emplace(socket_path, RData(std::string()));
-        if (value == tree_.values.end()) {
+          ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
           break;
         }
-        auto &typed_value = std::get<std::string>(value->second);
+        case DataType::Text: {
+          auto [value, _] = tree_.values.try_emplace(socket_path, RData(std::string()));
+          if (value == tree_.values.end()) {
+            break;
+          }
+          auto &typed_value = std::get<std::string>(value->second);
 
-        char buffer[100];
-        std::strncpy(buffer, typed_value.c_str(), std::min<int>(sizeof(buffer), typed_value.size() + 1));
-        if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
-          typed_value = std::move(std::string(std::string_view(buffer)));
+          char buffer[100];
+          std::strncpy(buffer, typed_value.c_str(), std::min<int>(sizeof(buffer), typed_value.size() + 1));
+          if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+            typed_value = std::move(std::string(std::string_view(buffer)));
+          }
+          break;
         }
-        break;
       }
+    } else {
+      ImGui::TextUnformatted(name.c_str());
     }
     
     ImNodes::EndInputAttribute();
@@ -195,13 +201,19 @@ void draw(NodeTree &tree)
     ImGui::EndPopup();
   }
 
+  std::unordered_set<int> linked_sockets;
+  for (const auto link : tree.links) {
+    linked_sockets.insert(link.first);
+    linked_sockets.insert(link.second);
+  }
+
   for (int node_index = 0; node_index < tree.nodes.size(); node_index++) {
     NodePtr &node = tree.nodes[node_index];
 
     ImNodes::BeginNode(tree.nodes_uid[node_index]);
     ImGui::PushItemWidth(120.0f);
 
-    ImNodesDeclarationContext declaration(tree, node_index);
+    ImNodesDeclarationContext declaration(tree, node_index, linked_sockets);
     node->declare(declaration);
     
     ImGui::PopItemWidth();
