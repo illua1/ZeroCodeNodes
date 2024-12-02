@@ -42,9 +42,13 @@ class ExecutionContext {
   T get_input(const std::string name);
 
   template<typename T>
+  T get_data(const std::string name);
+
+  template<typename T>
   void set_output(const std::string name, T value);
 
   virtual RData get_input(const std::string name) = 0;
+  virtual RData get_data(const std::string name) = 0;
   virtual void set_output(const std::string name, RData value) = 0;
 };
 
@@ -133,6 +137,12 @@ T ExecutionContext::get_input(std::string name)
 }
 
 template<typename T>
+T ExecutionContext::get_data(std::string name)
+{
+  return *std::get_if<T>(&this->get_data(name));
+}
+
+template<typename T>
 void ExecutionContext::set_output(std::string name, T value)
 {
   this->set_output(name, RData(std::move(value)));
@@ -153,7 +163,15 @@ void register_node_float_input_node_type();
 void register_node_text_concatination_node_type();
 void register_node_text_input_node_type();
 void register_node_value_to_text_node_type();
+void register_node_end_node_type();
 
 void register_node_types();
+
+}
+
+namespace zcn {
+
+std::string node_socket_to_path(int node_uid, int socket_uid);
+std::string node_value_to_path(int node_uid, const std::string &name);
 
 }

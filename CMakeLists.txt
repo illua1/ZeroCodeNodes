@@ -39,15 +39,18 @@ set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imn
 set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/ZCN_runtime_type.hh ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})
 
-set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/ZCN_node.hh
+set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/ZCN_execute.hh
+                   ${CMAKE_SOURCE_DIR}/src/ZCN_node.hh
                    ${CMAKE_SOURCE_DIR}/src/ZCN_node_draw.hh
+                   ${CMAKE_SOURCE_DIR}/src/execute.cc
                    ${CMAKE_SOURCE_DIR}/src/node.cc
                    ${CMAKE_SOURCE_DIR}/src/node_draw.cc)
 add_library(internal_nodes STATIC ${INTERNAL_NODES})
 target_link_libraries(internal_nodes PRIVATE internal_lib)
 target_link_libraries(internal_nodes PRIVATE ${EXTERNAL_DEPS})
 
-set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
+set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_end.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_float_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_text_concatination.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_text_input.cc

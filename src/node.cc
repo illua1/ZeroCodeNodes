@@ -110,6 +110,7 @@ void register_node_types()
   register_node_text_concatination_node_type();
   register_node_text_input_node_type();
   register_node_value_to_text_node_type();
+  register_node_end_node_type();
 }
 
 std::vector<std::string> all_node_types()
@@ -119,6 +120,20 @@ std::vector<std::string> all_node_types()
     list.push_back(item.first);
   }
   return list;
+}
+
+}
+
+namespace zcn {
+
+std::string node_socket_to_path(const int node_uid, const int socket_uid)
+{
+  return "nodes[" + std::to_string(node_uid) + "].[" + std::to_string(socket_uid) + "]";
+}
+
+std::string node_value_to_path(const int node_uid, const std::string &name)
+{
+  return "nodes[" + std::to_string(node_uid) + "]" + "." + name;
 }
 
 }

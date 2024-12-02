@@ -31,7 +31,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
   {
     const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
     
-    const std::string socket_path = "nodes[" + std::to_string(tree_.nodes_uid[node_index_]) + "].[" + std::to_string(socket_uid) + "]";
+    const std::string socket_path = node_socket_to_path(tree_.nodes_uid[node_index_], socket_uid);
 
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginInputAttribute(socket_uid, pin_for_type(type));
@@ -94,7 +94,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
 
   void add_data(const DataType type, const std::string name) override
   {
-    const std::string node_path = "nodes[" + std::to_string(tree_.nodes_uid[node_index_]) + "]" + "." + name;
+    const std::string node_path = node_value_to_path(tree_.nodes_uid[node_index_], name);
     switch (type) {
       case DataType::Int: {
         auto [value, _] = tree_.values.try_emplace(node_path, RData(int(0)));

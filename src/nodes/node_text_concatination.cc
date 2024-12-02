@@ -16,7 +16,7 @@ class TextConcatinationNode : public Node {
   {
     decl.add_input<std::string>("Префикс");
     decl.add_input<std::string>("Суфикс");
-    decl.add_output<std::string>("Сумма");
+    decl.add_output<std::string>("Текст");
   }
 
   void execute(ExecutionContext &context) const override

@@ -21,7 +21,7 @@ class TextInputNode : public Node {
 
   void execute(ExecutionContext &context) const override
   {
-    context.set_output<std::string>("Текст", "AAA");
+    context.set_output<std::string>("Текст", context.get_data<std::string>("Текст"));
   }
 };
 

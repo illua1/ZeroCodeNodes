@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <string>
 
+#include "src/ZCN_execute.hh"
 #include "src/ZCN_node.hh"
 #include "src/ZCN_node_draw.hh"
 
@@ -48,20 +49,22 @@ struct MetaTree {
   std::string internal_name;
   ImNodesEditorContext *context = ImNodes::EditorContextCreate();
 
+  zcn::ExecuteLog view_log;
+
   MetaTree(std::string custom_name, std::string custom_internal_name): name(std::move(custom_name)), internal_name(std::move(custom_internal_name)) {}
 
-  MetaTree(MetaTree &&other) : tree(std::move(other.tree)), name(std::move(other.name)), internal_name(std::move(other.internal_name)), context(other.context)
+  MetaTree(MetaTree &&other) : tree(std::move(other.tree)), name(std::move(other.name)), internal_name(std::move(other.internal_name)), context(other.context), view_log(std::move(view_log))
   {
     other.context = nullptr;
   }
-  
+
   MetaTree &operator =(MetaTree &&other)
   {
     this->~MetaTree();
     new(this) MetaTree(std::move(other));
     return *this;
   }
-  
+
   ~MetaTree()
   {
     if (context != nullptr) {
@@ -207,6 +210,12 @@ int main()
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
+    
+    
+    for (MetaTree &tree : session) {
+      zcn::VirtualFileSystemProvider side_effect_provider;
+      zcn::execute(tree.tree, tree.view_log, side_effect_provider);
+    }
   }
 
   ImNodes::PopAttributeFlag();

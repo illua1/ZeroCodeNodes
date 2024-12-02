@@ -21,7 +21,7 @@ class FloatInputNode : public Node {
 
   void execute(ExecutionContext &context) const override
   {
-    context.set_output<float>("Значение", 0.0f);
+    context.set_output<float>("Значение", context.get_data<float>("Значение"));
   }
 };
 
