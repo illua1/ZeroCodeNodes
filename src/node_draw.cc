@@ -16,9 +16,16 @@ class ImNodesDeclarationContext : public DeclarationContext {
   NodeTree &tree_;
   const int node_index_;
   const std::unordered_set<int> &linked_sockets_;
+  std::unordered_map<int, std::pair<float, float>> &r_socket_positions_;
 
  public:
-  ImNodesDeclarationContext(NodeTree &tree, const int node_index, const std::unordered_set<int> &linked_sockets) : tree_(tree), node_index_(node_index), linked_sockets_(linked_sockets)
+  ImNodesDeclarationContext(NodeTree &tree,
+                            const int node_index,
+                            const std::unordered_set<int> &linked_sockets,
+                            std::unordered_map<int, std::pair<float, float>> &r_socket_positions) : tree_(tree),
+                                                                                                    node_index_(node_index),
+                                                                                                    linked_sockets_(linked_sockets),
+                                                                                                    r_socket_positions_(r_socket_positions)
   {
     ImNodes::BeginNodeTitleBar();
     ImGui::TextUnformatted(tree_.node_labels[node_index].c_str());
@@ -77,6 +84,8 @@ class ImNodesDeclarationContext : public DeclarationContext {
       ImGui::TextUnformatted(name.c_str());
     }
     
+    r_socket_positions_[socket_uid] = std::make_pair(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+    
     ImNodes::EndInputAttribute();
     ImNodes::PopColorStyle();
   }
@@ -88,6 +97,9 @@ class ImNodesDeclarationContext : public DeclarationContext {
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginOutputAttribute(socket_uid, pin_for_type(type));
     ImGui::TextUnformatted(name.c_str());
+    
+    r_socket_positions_[socket_uid] = std::make_pair(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+    
     ImNodes::EndOutputAttribute();
     ImNodes::PopColorStyle();
   }
@@ -156,7 +168,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
   }
 };
 
-void draw(NodeTree &tree)
+void draw(NodeTree &tree, std::unordered_map<int, std::pair<float, float>> &r_socket_positions)
 {
   if (ImGui::BeginMenuBar()) {
 
@@ -213,7 +225,7 @@ void draw(NodeTree &tree)
     ImNodes::BeginNode(tree.nodes_uid[node_index]);
     ImGui::PushItemWidth(120.0f);
 
-    ImNodesDeclarationContext declaration(tree, node_index, linked_sockets);
+    ImNodesDeclarationContext declaration(tree, node_index, linked_sockets, r_socket_positions);
     node->declare(declaration);
     
     ImGui::PopItemWidth();

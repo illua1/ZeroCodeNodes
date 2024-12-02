@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <unordered_set>
+#include <numeric>
 #include <string>
 
 #include "src/ZCN_execute.hh"
@@ -196,7 +197,18 @@ int main()
       ImGui::EndMenuBar();
 
       ImNodes::EditorContextSet(tree.context);
-      zcn::nodes::draw(*tree.tree);
+
+      std::unordered_map<int, std::pair<float, float>> socket_positions;
+      zcn::nodes::draw(*tree.tree, socket_positions);
+
+      ImDrawList* draw_list = ImGui::GetWindowDrawList();
+      for (const auto sockets : socket_positions) {
+      //  std::visit([&](const auto log_value) {
+      //    
+      //  }, tree.view_log[zcn::]);
+        draw_list->AddText(ImGui::GetFont(), 13, ImVec2(sockets.second.first, sockets.second.second), IM_COL32_WHITE, "Test Standalone ImGui DrawList");
+      }
+
       ImGui::End();
     }
 

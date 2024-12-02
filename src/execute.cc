@@ -223,14 +223,6 @@ void execute(const TreePtr &tree, ExecuteLog &log, SideEffectReciver &reciver)
     tree->nodes[node_index]->execute(context);
   }
 
-std::cout << "\n";
-  for (const auto item : socket_values) {
-    std::cout << item.first << ", ";
-    std::visit([&](auto value) {
-      std::cout << value << ";\n";
-    }, item.second);
-  }
-
   log.socket_value = std::move(socket_values);
 }
 
