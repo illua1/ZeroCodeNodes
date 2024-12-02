@@ -2,9 +2,9 @@
 Coursework
 
 ## Project TODO:
- - [ ] Node editor with nodes, links, sockets and zones.
+ - [X] Node editor with nodes, links, sockets and zones.
  - [ ] Drag and drop files from extrnal (creation of import files with file path in sockets).
- - [ ] Multiple windows with separate editors, naming, creation, duplicating.
+ - [X] Multiple windows with separate editors, naming, creation, duplicating.
  - [ ] Base nodes for:
    - [ ] Importing text files.
    - [ ] Saving files.
