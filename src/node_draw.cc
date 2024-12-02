@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "ZCN_node.hh"
+#include "ZCN_execute.hh"
 
 #include "imgui.h"
 
@@ -124,7 +125,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
         }
         auto &typed_value = std::get<float>(value->second);
         
-        ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 100.0f);
+        ImGui::DragFloat(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
         break;
       }
       case DataType::Text: {
@@ -245,6 +246,97 @@ void draw(NodeTree &tree, std::unordered_map<int, std::pair<float, float>> &r_so
 
   if (int link_uid; ImNodes::IsLinkHovered(&link_uid) && ImGui::IsKeyPressed(ImGuiKey_MouseRight)) {
     zcn::drop_link_from_tree(tree, link_uid);
+  }
+}
+
+class ImNodesOverlayDeclarationContext : public DeclarationContext {
+  int counter_ = 0;
+  const NodeTree &tree_;
+  const int node_index_;
+  const ExecuteLog &log_;
+  const std::unordered_map<int, std::pair<float, float>> &socket_positions_;
+  ImDrawList &draw_list_;
+
+ public:
+  ImNodesOverlayDeclarationContext(const NodeTree &tree,
+                                    const int node_index,
+                                    const ExecuteLog &log,
+                                    const std::unordered_map<int, std::pair<float, float>> &socket_positions,
+                                    ImDrawList &draw_list) :
+                                        tree_(tree),
+                                        node_index_(node_index),
+                                        log_(log),
+                                        socket_positions_(socket_positions),
+                                        draw_list_(draw_list)
+  {
+  }
+
+  ~ImNodesOverlayDeclarationContext() override = default;
+
+  void add_input(const DataType type, std::string /*name*/) override
+  {
+    const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
+    this->show(type, socket_uid);
+  }
+
+  void add_output(const DataType type, std::string /*name*/) override
+  {
+    const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
+    this->show(type, socket_uid);
+  }
+
+  void add_data(const DataType /*type*/, const std::string /*name*/) override
+  {
+  }
+
+ private:
+  void show(const DataType type, const int socket_uid)
+  {
+    if (socket_positions_.find(socket_uid) == socket_positions_.end()) {
+      return;
+    }
+
+    const std::string socket_path = node_socket_to_path(tree_.nodes_uid[node_index_], socket_uid);
+
+    if (log_.socket_value.find(socket_path) == log_.socket_value.end()) {
+      return;
+    }
+
+    const std::pair<float, float> position = socket_positions_.at(socket_uid);
+    const RData &log_value = log_.socket_value.at(socket_path);
+
+    switch (type) {
+      case DataType::Int: {
+        [[maybe_unused]] auto &typed_value = std::get<int>(log_value);
+        // printf("Not implemented yet.\n");
+        const std::string test = std::to_string(typed_value);
+        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, test.c_str());
+        break;
+      }
+      case DataType::Float: {
+        auto &typed_value = std::get<float>(log_value);
+        const std::string test = std::to_string(typed_value);
+        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, test.c_str());
+        break;
+      }
+      case DataType::Text: {
+        auto &typed_value = std::get<std::string>(log_value);
+        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, typed_value.c_str());
+        break;
+      }
+    }
+  }
+};
+
+void draw_log_overlay(const NodeTree &tree, const ExecuteLog &log, const std::unordered_map<int, std::pair<float, float>> &socket_positions)
+{
+  ImDrawList &draw_list = *ImGui::GetForegroundDrawList();
+
+  for (int node_index = 0; node_index < tree.nodes.size(); node_index++) {
+    const NodePtr &node = tree.nodes[node_index];
+
+    ImNodesOverlayDeclarationContext declaration(tree, node_index, log, socket_positions, draw_list);
+    node->declare(declaration);
   }
 }
 

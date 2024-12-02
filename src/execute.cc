@@ -104,12 +104,22 @@ class BaseExecutionContext : public ExecutionContext {
     const int socket_uid = input_uids_for_name_[name];
     if (input_uid_to_output_uid_.find(socket_uid) == input_uid_to_output_uid_.end()) {
       const std::string socket_path = node_socket_to_path(node_uid_, socket_uid);
+      
+      execution_values_[socket_path] = tree_values_.at(socket_path);
+      
       return tree_values_.at(socket_path);
     }
     const int output_uid = input_uid_to_output_uid_.at(socket_uid);
     const int source_node_index = node_index_from_output_uid_.at(output_uid);
     const int source_node_uid = node_uids_[source_node_index];
     const std::string socket_path = node_socket_to_path(source_node_uid, output_uid);
+    
+    {
+      const std::string this_socket_path = node_socket_to_path(node_uid_, socket_uid);
+      execution_values_[this_socket_path] = execution_values_.at(socket_path);
+    }
+    
+    
     return execution_values_.at(socket_path);
   }
 
