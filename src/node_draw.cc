@@ -37,14 +37,20 @@ class ImNodesDeclarationContext : public DeclarationContext {
 
   void add_input(const DataType type, std::string name) override
   {
+    if (counter_ > 0) {
+      ImGui::Dummy(ImVec2(0.0f, 6.0f));
+    }
+
     const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
     
     const std::string socket_path = node_socket_to_path(tree_.nodes_uid[node_index_], socket_uid);
 
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginInputAttribute(socket_uid, pin_for_type(type));
-    // ImGui::TextUnformatted(name.c_str());
+
+    r_socket_positions_[socket_uid] = std::make_pair(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
     
+    ImGui::PushItemWidth(120.0f - ImGui::CalcTextSize(name.c_str()).x);
     if (linked_sockets_.find(socket_uid) == linked_sockets_.end()) {
       switch (type) {
         case DataType::Int: {
@@ -53,7 +59,8 @@ class ImNodesDeclarationContext : public DeclarationContext {
             break;
           }
           [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
-          printf("Not implemented yet.\n");
+
+          ImGui::DragInt(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
           break;
         }
         case DataType::Float: {
@@ -84,8 +91,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
     } else {
       ImGui::TextUnformatted(name.c_str());
     }
-    
-    r_socket_positions_[socket_uid] = std::make_pair(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+    ImGui::PopItemWidth();
     
     ImNodes::EndInputAttribute();
     ImNodes::PopColorStyle();
@@ -93,13 +99,20 @@ class ImNodesDeclarationContext : public DeclarationContext {
 
   void add_output(const DataType type, std::string name) override
   {
+    if (counter_ > 0) {
+      ImGui::Dummy(ImVec2(0.0f, 6.0f));
+    }
+
     const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
 
     ImNodes::PushColorStyle(ImNodesCol_Pin, color_for_type(type));
     ImNodes::BeginOutputAttribute(socket_uid, pin_for_type(type));
-    ImGui::TextUnformatted(name.c_str());
     
     r_socket_positions_[socket_uid] = std::make_pair(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+    
+    ImGui::Indent(120.f - ImGui::CalcTextSize(name.c_str()).x);
+    
+    ImGui::TextUnformatted(name.c_str());
     
     ImNodes::EndOutputAttribute();
     ImNodes::PopColorStyle();
@@ -249,12 +262,23 @@ void draw(NodeTree &tree, std::unordered_map<int, std::pair<float, float>> &r_so
   }
 }
 
+static ImVec2 operator + (const ImVec2 &a, const ImVec2 b)
+{
+  return ImVec2(a.x + b.x, a.y + b.y);
+}
+
+static ImVec2 operator - (const ImVec2 &a, const ImVec2 b)
+{
+  return ImVec2(a.x - b.x, a.y - b.y);
+}
+
 class ImNodesOverlayDeclarationContext : public DeclarationContext {
   int counter_ = 0;
   const NodeTree &tree_;
   const int node_index_;
   const ExecuteLog &log_;
   const std::unordered_map<int, std::pair<float, float>> &socket_positions_;
+  const std::unordered_set<int> &linked_sockets_;
   ImDrawList &draw_list_;
 
  public:
@@ -262,11 +286,13 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
                                     const int node_index,
                                     const ExecuteLog &log,
                                     const std::unordered_map<int, std::pair<float, float>> &socket_positions,
+                                    const std::unordered_set<int> &linked_sockets,
                                     ImDrawList &draw_list) :
                                         tree_(tree),
                                         node_index_(node_index),
                                         log_(log),
                                         socket_positions_(socket_positions),
+                                        linked_sockets_(linked_sockets),
                                         draw_list_(draw_list)
   {
   }
@@ -276,13 +302,13 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
   void add_input(const DataType type, std::string /*name*/) override
   {
     const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
-    this->show(type, socket_uid);
+    this->show(type, socket_uid, false);
   }
 
   void add_output(const DataType type, std::string /*name*/) override
   {
     const int socket_uid = tree_.node_sockets_uid[node_index_][counter_++];
-    this->show(type, socket_uid);
+    this->show(type, socket_uid, true);
   }
 
   void add_data(const DataType /*type*/, const std::string /*name*/) override
@@ -290,8 +316,12 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
   }
 
  private:
-  void show(const DataType type, const int socket_uid)
+  void show(const DataType type, const int socket_uid, const bool dirrection)
   {
+    if (linked_sockets_.find(socket_uid) == linked_sockets_.end()) {
+      return;
+    }
+    
     if (socket_positions_.find(socket_uid) == socket_positions_.end()) {
       return;
     }
@@ -302,40 +332,74 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
       return;
     }
 
-    const std::pair<float, float> position = socket_positions_.at(socket_uid);
+    const std::pair<float, float> position_pair = socket_positions_.at(socket_uid);
     const RData &log_value = log_.socket_value.at(socket_path);
 
-    switch (type) {
-      case DataType::Int: {
-        [[maybe_unused]] auto &typed_value = std::get<int>(log_value);
-        // printf("Not implemented yet.\n");
-        const std::string test = std::to_string(typed_value);
-        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, test.c_str());
-        break;
-      }
-      case DataType::Float: {
-        auto &typed_value = std::get<float>(log_value);
-        const std::string test = std::to_string(typed_value);
-        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, test.c_str());
-        break;
-      }
-      case DataType::Text: {
-        auto &typed_value = std::get<std::string>(log_value);
-        draw_list_.AddText(ImVec2(position.first, position.second), IM_COL32_WHITE, typed_value.c_str());
-        break;
-      }
+    constexpr int offset = 6;
+
+    int overlay_alpha = 160;
+
+    int is_socket_uid = -1;
+    const bool is_under_cursore = ImNodes::IsPinHovered(&is_socket_uid);
+    if (is_under_cursore && is_socket_uid == socket_uid) {
+      overlay_alpha = 50;
     }
+
+    const std::string test = [&]() -> std::string {
+      switch (type) {
+        case DataType::Int: {
+          return std::to_string(std::get<int>(log_value));
+        }
+        case DataType::Float: {
+          return std::to_string(std::get<float>(log_value));
+        }
+        case DataType::Text: {
+          return std::get<std::string>(log_value);
+        }
+      }
+      return "..";
+    }();
+
+    const ImU32 background_color = [&]() -> ImU32 {
+      switch (type) {
+        case DataType::Int: {
+          return IM_COL32(40, 40, 140, overlay_alpha);
+        }
+        case DataType::Float: {
+          return IM_COL32(140, 40, 40, overlay_alpha);
+        }
+        case DataType::Text: {
+          return IM_COL32(40, 140, 40, overlay_alpha);
+        }
+      }
+      return IM_COL32(0, 0, 0, 256);
+    }();
+
+    const ImVec2 node_size = ImNodes::GetNodeDimensions(tree_.nodes_uid[node_index_]);
+
+    const ImVec2 bound = ImGui::CalcTextSize(test.c_str(), nullptr, false);
+
+    const ImVec2 position(position_pair.first - (dirrection ? -node_size.x : bound.x + offset * 2), position_pair.second);
+
+    draw_list_.AddRectFilled(position - ImVec2(offset, offset), position + bound + ImVec2(offset, offset), background_color, float(offset * 2));
+    draw_list_.AddText(position, IM_COL32_WHITE, test.c_str());
   }
 };
 
 void draw_log_overlay(const NodeTree &tree, const ExecuteLog &log, const std::unordered_map<int, std::pair<float, float>> &socket_positions)
 {
-  ImDrawList &draw_list = *ImGui::GetForegroundDrawList();
+  ImDrawList &draw_list = *ImGui::GetWindowDrawList();
+
+  std::unordered_set<int> linked_sockets;
+  for (const auto link : tree.links) {
+    linked_sockets.insert(link.first);
+    linked_sockets.insert(link.second);
+  }
 
   for (int node_index = 0; node_index < tree.nodes.size(); node_index++) {
     const NodePtr &node = tree.nodes[node_index];
 
-    ImNodesOverlayDeclarationContext declaration(tree, node_index, log, socket_positions, draw_list);
+    ImNodesOverlayDeclarationContext declaration(tree, node_index, log, socket_positions, linked_sockets, draw_list);
     node->declare(declaration);
   }
 }

@@ -108,7 +108,7 @@ int main()
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version.c_str());
 
-  ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+  ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick | ImNodesAttributeFlags_EnableLinkCreationOnSnap);
 
   std::unordered_set<std::string> tree_names;
   std::unordered_set<std::string> internal_tree_names;
@@ -189,11 +189,13 @@ int main()
 
       ImGui::BeginMenuBar();
       char buffer[100];
+      ImGui::Dummy(ImVec2(90.0f, 0.0f));
       std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
       if (ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
         tree_names.erase(tree.name);
         tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
       }
+      ImGui::Dummy(ImVec2(90.0f, 0.0f));
       ImGui::EndMenuBar();
 
       ImNodes::EditorContextSet(tree.context);
