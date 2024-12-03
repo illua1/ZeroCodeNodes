@@ -40,7 +40,7 @@ class StringCmp : public Node {
 
     bool result = true;
     for (int index = 0; index < a.size(); index++) {
-      if (type_options[type_op_index] != "Регистр") {
+      if (type_options[type_op_index] == "Регистр") {
         result &= a[index] == b[index];
       } else {
         const unsigned char a_c = a[index];

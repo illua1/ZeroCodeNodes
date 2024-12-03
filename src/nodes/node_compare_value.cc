@@ -6,22 +6,51 @@
 
 namespace zcn::node::compare_value {
 
-class EndNode : public Node {
- public:
-  EndNode() = default;
+const static std::vector<std::string> options = {"Равно", "Больше", "Меньше", "Не равно"};
 
-  ~EndNode() override = default;
+class Math : public Node {
+  mutable int op_index = 0;
+ public:
+  Math() = default;
+
+  ~Math() override = default;
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_input<float>("Значение");
-    decl.add_input<std::string>("Текст");
+    op_index = decl.add_selector("Операция", op_index, options);
+
+    decl.add_input<float>("А");
+    decl.add_input<float>("Б");
+
+    decl.add_output<int>("Результат");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.get_input<float>("Значение");
-    context.get_input<std::string>("Текст");
+    const float a = context.get_input<float>("А");
+    const float b = context.get_input<float>("Б");
+    
+    if (options[op_index] == "Равно") {
+      context.set_output<int>("Результат", a == b);
+      return;
+    }
+    
+    if (options[op_index] == "Больше") {
+      context.set_output<int>("Результат", a < b);
+      return;
+    }
+    
+    if (options[op_index] == "Меньше") {
+      context.set_output<int>("Результат", a > b);
+      return;
+    }
+    
+    if (options[op_index] == "Не равно") {
+      context.set_output<int>("Результат", a != b);
+      return;
+    }
+
+    context.set_output("Результат", 0);
   }
 };
 
@@ -32,7 +61,7 @@ namespace zcn {
 void register_node_compare_value_node_type()
 {
   register_node_type("Сравнить числа", []() -> NodePtr {
-    return std::make_unique<node::compare_value::EndNode>();
+    return std::make_unique<node::compare_value::Math>();
   });
 }
 
