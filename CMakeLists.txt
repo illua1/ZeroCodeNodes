@@ -17,7 +17,7 @@ find_package(GLEW REQUIRED)
 include(FetchContent)
 
 # GLFW C++ wrapper
-set(glfwpp_patch_1 git apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/deps_modyfications/glfwpp_cmake_glfw_patch.diff)
+set(glfwpp_patch_1 git apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/deps_modyfications/glfwpp_cmake_glfw_path.diff)
 set(GLFWPP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(GLFWPP
   GIT_REPOSITORY https://github.com/janekb04/glfwpp
@@ -26,30 +26,21 @@ FetchContent_Declare(GLFWPP
 )
 
 # ImGUI-base nodes
-# set(imnodes_patch_1 git apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/deps_modyfications/imnodes_imgui_docking_branch_patch.diff)
 set(IMNODES_STANDALONE_PROJECT OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(imnodes
-  GIT_REPOSITORY https://github.com/illua1/imnodes-fork
-  GIT_TAG 3bcd6cc7434beb1e8497e956dc1b86b589fe33b9
-  # PATCH_COMMAND ${imnodes_patch_1}
+  GIT_REPOSITORY https://github.com/Nelarius/imnodes
+  GIT_TAG 8563e1655bd9bb1f249e6552cc6274d506ee788b
 )
 
 FetchContent_MakeAvailable(GLFWPP imnodes)
 
-# set(Boost_USE_STATIC_LIBS OFF) 
-# set(Boost_USE_MULTITHREADED OFF)  
-# set(Boost_USE_STATIC_RUNTIME OFF) 
-# find_package(Boost COMPONENTS string_algo)
-# include_directories(${Boost_INCLUDE_DIRS})
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED OFF)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost COMPONENTS string_algo)
+include_directories(${Boost_INCLUDE_DIRS})
 
-set(EXTERNAL_DEPS OpenGL::GL
-                  GLEW::GLEW
-                  imgui::imgui
-                  Mathter::Mathter
-                  GLFWPP
-                  imnodes
-                  # ${Boost_LIBRARIES}
-                  )
+set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes ${Boost_LIBRARIES})
 
 set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/ZCN_runtime_type.hh ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})
@@ -59,8 +50,7 @@ set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/ZCN_execute.hh
                    ${CMAKE_SOURCE_DIR}/src/ZCN_node_draw.hh
                    ${CMAKE_SOURCE_DIR}/src/execute.cc
                    ${CMAKE_SOURCE_DIR}/src/node.cc
-                   ${CMAKE_SOURCE_DIR}/src/node_draw.cc
-                   )
+                   ${CMAKE_SOURCE_DIR}/src/node_draw.cc)
 add_library(internal_nodes STATIC ${INTERNAL_NODES})
 target_link_libraries(internal_nodes PRIVATE internal_lib)
 target_link_libraries(internal_nodes PRIVATE ${EXTERNAL_DEPS})
