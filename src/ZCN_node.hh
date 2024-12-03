@@ -9,12 +9,6 @@
 
 namespace zcn {
 
-enum class DataType : int8_t {
-  Text,
-  Float,
-  Int,
-};
-
 template<typename T>
 inline DataType static_type_to_type();
 
@@ -29,9 +23,10 @@ class DeclarationContext {
   template<typename T>
   void add_data(std::string name);
 
-  virtual void add_input(const DataType type, std::string name) = 0;
-  virtual void add_output(const DataType type, std::string name) = 0;
-  virtual void add_data(const DataType type, std::string name) = 0;
+  virtual void add_input(DataType type, std::string name) = 0;
+  virtual void add_output(DataType type, std::string name) = 0;
+  virtual int add_selector(const std::string name, const int selected, const std::vector<std::string> &options) = 0;
+  virtual void add_data(DataType type, std::string name) = 0;
 };
 
 class ExecutionContext {
@@ -47,8 +42,8 @@ class ExecutionContext {
   template<typename T>
   void set_output(const std::string name, T value);
 
-  virtual RData get_input(const std::string name) = 0;
-  virtual RData get_data(const std::string name) = 0;
+  virtual RData get_input(DataType type, const std::string name) = 0;
+  virtual RData get_data(DataType type, const std::string name) = 0;
   virtual void set_output(const std::string name, RData value) = 0;
 };
 
@@ -133,13 +128,13 @@ void DeclarationContext::add_output(std::string name)
 template<typename T>
 T ExecutionContext::get_input(std::string name)
 {
-  return *std::get_if<T>(&this->get_input(name));
+  return *std::get_if<T>(&this->get_input(static_type_to_type<T>(), name));
 }
 
 template<typename T>
 T ExecutionContext::get_data(std::string name)
 {
-  return *std::get_if<T>(&this->get_data(name));
+  return *std::get_if<T>(&this->get_data(static_type_to_type<T>(), name));
 }
 
 template<typename T>

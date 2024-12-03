@@ -25,7 +25,9 @@ class CreationDeclarationContext : public DeclarationContext {
     uids_.push_back(input_uid);
   }
 
-  void add_data(const DataType type, std::string name) override {}
+  void add_data(const DataType /*type*/, std::string /*name*/) override {}
+
+  int add_selector(const std::string /*name*/, const int selected, const std::vector<std::string> &/*options*/) override { return selected; }
 };
 
 int add_node_to_tree(NodeTree &tree, const std::string node_type)

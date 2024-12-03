@@ -31,7 +31,7 @@ namespace zcn {
 
 void register_node_float_input_node_type()
 {
-  register_node_type("Ввод значения", []() -> NodePtr {
+  register_node_type("Значение", []() -> NodePtr {
     return std::make_unique<node::float_input::FloatInputNode>();
   });
 }

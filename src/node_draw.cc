@@ -1,6 +1,7 @@
 
 #include <cassert>
 #include <unordered_set>
+#include <numeric>
 #include <unordered_map>
 #include <algorithm>
 
@@ -157,6 +158,33 @@ class ImNodesDeclarationContext : public DeclarationContext {
         break;
       }
     }
+  }
+
+  int add_selector(const std::string name, const int selected, const std::vector<std::string> &options) override
+  {
+    std::vector<int> indices;
+    indices.resize(options.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), [&](const int a, const int b) {
+      return options[a] < options[b];
+    });
+
+    std::vector<const char *> raw_options;
+    raw_options.resize(options.size());
+    std::transform(indices.begin(), indices.end(), raw_options.begin(), [&](const int index) {
+      return options[index].c_str();
+    });
+
+    ImGui::PushItemWidth(130.0f - ImGui::CalcTextSize(name.c_str()).x);
+
+    int index = std::distance(indices.begin(), std::find(indices.begin(), indices.end(), selected));
+    if (ImGui::Combo(name.c_str(), &index, raw_options.data(), raw_options.size())) {
+      ImGui::PopItemWidth();
+      return indices[index];
+    }
+    ImGui::PopItemWidth();
+
+    return selected;
   }
 
  protected:
@@ -317,6 +345,8 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
   void add_data(const DataType /*type*/, const std::string /*name*/) override
   {
   }
+
+  int add_selector(const std::string /*name*/, const int selected, const std::vector<std::string> &/*options*/) override { return selected; }
 
  private:
   void show(const DataType type, const int socket_uid, const bool dirrection)

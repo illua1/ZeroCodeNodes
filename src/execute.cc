@@ -75,6 +75,8 @@ class BaseExecutionContext : public ExecutionContext {
      }
 
      void add_data(const DataType /*type*/, std::string /*name*/) override {}
+     
+     int add_selector(const std::string /*name*/, const int selected, const std::vector<std::string> &/*options*/) override { return selected; }
    };
 
  public:
@@ -99,7 +101,7 @@ class BaseExecutionContext : public ExecutionContext {
  
   ~BaseExecutionContext() override = default;
 
-  RData get_input(const std::string name) override
+  RData get_input(DataType type, const std::string name) override
   {
     const int socket_uid = input_uids_for_name_[name];
     if (input_uid_to_output_uid_.find(socket_uid) == input_uid_to_output_uid_.end()) {
@@ -114,16 +116,18 @@ class BaseExecutionContext : public ExecutionContext {
     const int source_node_uid = node_uids_[source_node_index];
     const std::string socket_path = node_socket_to_path(source_node_uid, output_uid);
     
+    RData recived_value = ensure_type(type, execution_values_.at(socket_path));
+    
     {
       const std::string this_socket_path = node_socket_to_path(node_uid_, socket_uid);
-      execution_values_[this_socket_path] = execution_values_.at(socket_path);
+      execution_values_[this_socket_path] = recived_value;
     }
     
     
-    return execution_values_.at(socket_path);
+    return recived_value;
   }
 
-  RData get_data(const std::string name) override
+  RData get_data(DataType type, const std::string name) override
   {
     const std::string node_path = node_value_to_path(node_uid_, name);
     return tree_values_.at(node_path);
@@ -160,6 +164,8 @@ class TopologyDeclarationContext : public DeclarationContext {
   }
 
   void add_data(const DataType /*type*/, std::string /*name*/) override {}
+
+  int add_selector(const std::string /*name*/, const int selected, const std::vector<std::string> &/*options*/) override { return selected; }
 };
 
 void execute(const TreePtr &tree, ExecuteLog &log, SideEffectReciver &reciver)
