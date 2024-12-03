@@ -6,11 +6,11 @@
 
 namespace zcn::node::string_line_break {
 
-class EndNode : public Node {
+class StringLineBreak : public Node {
  public:
-  EndNode() = default;
+  StringLineBreak() = default;
 
-  ~EndNode() override = default;
+  ~StringLineBreak() override = default;
 
   void declare(DeclarationContext &decl) const override
   {
@@ -30,7 +30,7 @@ namespace zcn {
 void register_node_string_line_break_node_type()
 {
   register_node_type("Перенос строки", []() -> NodePtr {
-    return std::make_unique<node::string_line_break::EndNode>();
+    return std::make_unique<node::string_line_break::StringLineBreak>();
   });
 }
 

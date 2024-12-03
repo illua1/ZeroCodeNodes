@@ -34,7 +34,13 @@ FetchContent_Declare(imnodes
 
 FetchContent_MakeAvailable(GLFWPP imnodes)
 
-set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes)
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED OFF)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost COMPONENTS string_algo)
+include_directories(${Boost_INCLUDE_DIRS})
+
+set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes ${Boost_LIBRARIES})
 
 set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/ZCN_runtime_type.hh ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})

@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace zcn::node::math {
-  
+
 const static std::vector<std::string> options =
   {"Сложить",
    "Вычесть",
