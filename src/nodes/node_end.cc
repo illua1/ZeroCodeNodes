@@ -14,13 +14,11 @@ class EndNode : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_input<float>("Значение");
     decl.add_input<std::string>("Текст");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.get_input<float>("Значение");
     context.get_input<std::string>("Текст");
   }
 };

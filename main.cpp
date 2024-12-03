@@ -88,7 +88,7 @@ int main()
   ImNodes::CreateContext();
 
   ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
   ImGui::StyleColorsDark();
 
   ImFontConfig font_config; 
@@ -222,6 +222,12 @@ int main()
     for (MetaTree &tree : session) {
       zcn::VirtualFileSystemProvider side_effect_provider;
       zcn::execute(tree.tree, tree.view_log, side_effect_provider);
+    }
+    
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
     }
   }
 
