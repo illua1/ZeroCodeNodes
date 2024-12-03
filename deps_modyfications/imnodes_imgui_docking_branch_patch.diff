@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c4c8d50..15c1992 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
+ 
+ project(imnodes)
+ 
+-set(CMAKE_CXX_STANDARD 11)
++set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_CXX_STANDARD_REQUIRED True)
+ 
+ 
+diff --git a/vcpkg.json b/vcpkg.json
+index f16de75..de1c91a 100644
+--- a/vcpkg.json
++++ b/vcpkg.json
+@@ -5,7 +5,7 @@
+         "sdl2",
+         {
+           "name": "imgui",
+-          "features": [ "sdl2-binding", "opengl3-binding" ]
++          "features": [ "sdl2-binding", "opengl3-binding", "docking-experimental" ]
+         }
+     ]
+ }
