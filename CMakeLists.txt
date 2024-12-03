@@ -49,12 +49,31 @@ add_library(internal_nodes STATIC ${INTERNAL_NODES})
 target_link_libraries(internal_nodes PRIVATE internal_lib)
 target_link_libraries(internal_nodes PRIVATE ${EXTERNAL_DEPS})
 
-set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_end.cc
-              ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
+set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_file_write.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_foreach_file.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_int_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_float_input.cc
-              ${CMAKE_SOURCE_DIR}/src/nodes/node_text_concatination.cc
-              ${CMAKE_SOURCE_DIR}/src/nodes/node_text_input.cc
-              ${CMAKE_SOURCE_DIR}/src/nodes/node_value_to_text.cc)
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_input.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_math.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_compare_value.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_up.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_down.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_regax.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_replace.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_slice.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_find.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_length.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_line_break.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_concatination.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_string_compare.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_value_to_text.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_execute_other.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_end.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_loop.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_switch.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_question.cc
+              )
 add_library(nodes_lib STATIC ${NODES_LIB})
 target_link_libraries(nodes_lib PRIVATE internal_nodes)
 

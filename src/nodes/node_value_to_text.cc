@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <sstream>
 
 namespace zcn::node::value_to_text {
 
@@ -15,12 +16,17 @@ class ValueToTextNode : public Node {
   void declare(DeclarationContext &decl) const override
   {
     decl.add_input<float>("Значение");
+    decl.add_input<int>("Знаки");
     decl.add_output<std::string>("Текст");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.set_output<std::string>("Текст", std::to_string(context.get_input<float>("Значение")));
+    std::ostringstream stream;
+    stream.precision(std::max(0, context.get_input<int>("Знаки")));
+    stream << std::fixed << context.get_input<float>("Значение");
+
+    context.set_output<std::string>("Текст", std::move(stream).str());
   }
 };
 

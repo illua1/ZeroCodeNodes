@@ -2,6 +2,7 @@
 #include <cassert>
 #include <unordered_set>
 #include <unordered_map>
+#include <algorithm>
 
 #include "ZCN_node.hh"
 #include "ZCN_execute.hh"
@@ -60,7 +61,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
           }
           [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
 
-          ImGui::DragInt(name.c_str(), &typed_value, 1.0f, 0.0f, 0.0f);
+          ImGui::DragInt(name.c_str(), &typed_value, 1.0f, 0, 0);
           break;
         }
         case DataType::Float: {
@@ -128,7 +129,7 @@ class ImNodesDeclarationContext : public DeclarationContext {
           break;
         }
         [[maybe_unused]] auto &typed_value = std::get<int>(value->second);
-        printf("Not implemented yet.\n");
+          ImGui::DragInt(name.c_str(), &typed_value, 1.0f, 0, 0);
         break;
       }
       case DataType::Float: {
@@ -217,7 +218,9 @@ void draw(NodeTree &tree, std::unordered_map<int, std::pair<float, float>> &r_so
   }
 
   if (ImGui::BeginPopup("add node")) {
-    for (const std::string node_type : zcn::all_node_types()) {
+    std::vector<std::string> list = zcn::all_node_types();
+    std::sort(list.begin(), list.end());
+    for (const std::string node_type : list) {
       if (ImGui::MenuItem(node_type.c_str())) {
         const int node_index = zcn::add_node_to_tree(tree, node_type);
         ImNodes::SetNodeScreenSpacePos(tree.nodes_uid[node_index], ImGui::GetMousePos());

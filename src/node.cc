@@ -106,10 +106,35 @@ NodePtr create_node_by_name(const std::string type_name)
 void register_node_types()
 {
   register_node_file_read_node_type();
+  register_node_file_write_node_type();
+  register_node_foreach_file_node_type();
+
+  register_node_int_input_node_type();
   register_node_float_input_node_type();
-  register_node_text_concatination_node_type();
-  register_node_text_input_node_type();
+  register_node_string_input_node_type();
+
+  register_node_math_node_type();
+  register_node_compare_value_node_type();
+
+  register_node_string_up_register_node_type();
+  register_node_string_down_register_node_type();
+  register_node_string_regax_node_type();
+  register_node_string_replace_node_type();
+  register_node_string_slice_node_type();
+  register_node_string_find_node_type();
+  register_node_string_length_node_type();
+  register_node_string_line_break_node_type();
+  register_node_string_concatination_node_type();
+  register_node_string_compare_node_type();
+
   register_node_value_to_text_node_type();
+
+  register_node_execute_other_node_type();
+  register_node_loop_node_type();
+  register_node_switch_node_type();
+
+  register_node_question_node_type();
+  
   register_node_end_node_type();
 }
 
