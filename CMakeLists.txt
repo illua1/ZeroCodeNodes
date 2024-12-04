@@ -2,10 +2,16 @@ cmake_minimum_required(VERSION 3.31)
 
 include(F:/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
+set(VCPKG_INSTALL_OPTIONS "--debug")
+
 project(ZeroCodeNodes)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-DO3 -DNDEBUG /EHsc")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "-DO2 -DNDEBUG /EHsc")
+add_compile_options(/Wall)
+
+set(MSVC_ASAN ON)
 
 add_executable(Main main.cpp)
 
@@ -42,13 +48,10 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes ${Boost_LIBRARIES})
 
-set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/ZCN_runtime_type.hh ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
+set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})
 
-set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/ZCN_execute.hh
-                   ${CMAKE_SOURCE_DIR}/src/ZCN_node.hh
-                   ${CMAKE_SOURCE_DIR}/src/ZCN_node_draw.hh
-                   ${CMAKE_SOURCE_DIR}/src/execute.cc
+set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/execute.cc
                    ${CMAKE_SOURCE_DIR}/src/node.cc
                    ${CMAKE_SOURCE_DIR}/src/node_draw.cc)
 add_library(internal_nodes STATIC ${INTERNAL_NODES})
@@ -84,3 +87,46 @@ add_library(nodes_lib STATIC ${NODES_LIB})
 target_link_libraries(nodes_lib PRIVATE internal_nodes)
 
 target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS} internal_lib nodes_lib)
+
+# Get all propreties that cmake supports
+if(NOT CMAKE_PROPERTY_LIST)
+    execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
+    
+    # Convert command output into a CMake list
+    string(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
+    string(REGEX REPLACE "\n" ";" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
+    list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
+endif()
+    
+function(print_properties)
+    message("CMAKE_PROPERTY_LIST = ${CMAKE_PROPERTY_LIST}")
+endfunction()
+    
+function(print_target_properties target)
+    if(NOT TARGET ${target})
+      message(STATUS "There is no target named '${target}'")
+      return()
+    endif()
+
+    foreach(property ${CMAKE_PROPERTY_LIST})
+        string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
+
+        # Fix https://stackoverflow.com/questions/32197663/how-can-i-remove-the-the-location-property-may-not-be-read-from-target-error-i
+        if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
+            continue()
+        endif()
+
+        get_property(was_set TARGET ${target} PROPERTY ${property} SET)
+        if(was_set)
+            get_target_property(value ${target} ${property})
+            message("${target} ${property} = ${value}")
+        endif()
+    endforeach()
+endfunction()
+
+message(STATUS {CPP_COMPILER_LAUNCHER})
+
+print_target_properties(Main)
+print_target_properties(internal_lib)
+print_target_properties(nodes_lib)
+print_target_properties(${EXTERNAL_DEPS})
