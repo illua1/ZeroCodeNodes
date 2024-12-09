@@ -28,6 +28,8 @@ find_package(Mathter REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 
 include(FetchContent)
 
@@ -52,13 +54,20 @@ FetchContent_Declare(imnodes
 FetchContent_MakeAvailable(imnodes)
 set(IMNODES_STANDALONE_PROJECT OFF CACHE BOOL "" FORCE)
 
-set(EXTERNAL_DEPS OpenGL::GL GLEW::GLEW imgui::imgui Mathter::Mathter GLFWPP imnodes)
+set(EXTERNAL_DEPS OpenGL::GL
+                  GLEW::GLEW
+                  imgui::imgui
+                  Mathter::Mathter
+                  nlohmann_json::nlohmann_json
+                  GLFWPP
+                  imnodes)
 
 set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})
 
 set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/execute.cc
                    ${CMAKE_SOURCE_DIR}/src/node.cc
+                   ${CMAKE_SOURCE_DIR}/src/node_json.cc
                    ${CMAKE_SOURCE_DIR}/src/node_draw.cc)
 add_library(internal_nodes STATIC ${INTERNAL_NODES})
 target_link_libraries(internal_nodes PRIVATE internal_lib)

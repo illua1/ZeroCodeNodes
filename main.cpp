@@ -7,6 +7,7 @@
 
 #include "src/ZCN_execute.hh"
 #include "src/ZCN_node.hh"
+#include "src/ZCN_node_json.hh"
 #include "src/ZCN_node_draw.hh"
 
 /*
@@ -188,6 +189,11 @@ int main()
       }
 
       ImGui::BeginMenuBar();
+      
+      if (ImGui::Button("Сохранить")) {
+        std::cout << zcn::tree_to_json(tree.tree) << ";\n";
+      }
+      
       char buffer[100];
       ImGui::Dummy(ImVec2(90.0f, 0.0f));
       std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
