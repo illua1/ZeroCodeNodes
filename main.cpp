@@ -112,6 +112,7 @@ int main()
   ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick | ImNodesAttributeFlags_EnableLinkCreationOnSnap);
 
   std::unordered_set<std::string> tree_names;
+  tree_names.insert("");
   std::unordered_set<std::string> internal_tree_names;
 
   const auto new_tree_name = [](std::unordered_set<std::string> &tree_names, std::string start) -> std::string {
@@ -148,74 +149,107 @@ int main()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Программы", nullptr, ImGuiWindowFlags_MenuBar);
-    
-    const MetaTree *tree_to_delete = nullptr;
     const MetaTree *new_tree = nullptr;
+    if (ImGui::Begin("Программы", nullptr, ImGuiWindowFlags_MenuBar)) {
+      const MetaTree *tree_to_delete = nullptr;
+      const MetaTree *tree_to_copy = nullptr;
 
-    if (ImGui::BeginListBox("Список программ"))
-    {
-      if (ImGui::Button("Добавить")) {
-        session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+      if (ImGui::BeginMenuBar()) {
+        if (ImGui::Button("Добавить")) {
+          session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+          new_tree = &session.back();
+        }
+        if (ImGui::Button("Загрузить")) {
+        }
+        ImGui::EndMenuBar();
+      }
+
+      if (ImGui::BeginListBox("###Список программ", {-1.0f, -1.0f})) {
+        for (MetaTree &tree : session) {
+
+          char buffer[100];
+          std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+          if (const std::string name_input_label = "###Name" + tree.internal_name;
+              ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
+            tree_names.erase(tree.name);
+            tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+          }
+
+          ImGui::BeginGroup();
+
+          if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+            tree_to_delete = &tree;
+          }
+
+          if (const std::string delete_button_label = "Копировать###Copy" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+            tree_to_copy = &tree;
+          }
+
+          if (const std::string delete_button_label = "Сохранить###Save" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+            // std::cout << zcn::tree_to_json(tree.tree) << ";\n";
+          }
+
+          ImGui::EndGroup();
+
+          ImGui::Separator();
+        }
+        ImGui::EndListBox();
+      }
+
+      if (tree_to_delete != nullptr) {
+        tree_names.erase(tree_to_delete->name);
+        session.erase(session.begin() + std::distance<const MetaTree *>(&session[0], tree_to_delete));
+      }
+
+      if (tree_to_copy != nullptr) {
+        zcn::TreePtr copy = zcn::tree_from_json(zcn::tree_to_json(tree_to_copy->tree));
+        MetaTree meta_copy(new_tree_name(tree_names, tree_to_copy->name),
+                           new_tree_name(internal_tree_names, tree_to_copy->internal_name));
+        meta_copy.tree = std::move(copy);
+
+        session.push_back(std::move(meta_copy));
         new_tree = &session.back();
       }
-
-      for (MetaTree &tree : session) {
-
-        char buffer[100];
-        std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
-        if (const std::string name_input_label = "###Name" + tree.internal_name;
-            ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
-          tree_names.erase(tree.name);
-          tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
-        }
-
-        if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
-          tree_to_delete = &tree;
-        }
-
-        ImGui::Separator();
-      }
-      ImGui::EndListBox();
-    }
-
-    ImGui::End();
-
-    for (MetaTree &tree : session) {
-      ImGui::Begin(tree.internal_name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
-      if (new_tree == &tree) {
-        ImGui::SetWindowPos({500, 500});
-        ImGui::SetWindowSize({500, 500});
-      }
-
-      ImGui::BeginMenuBar();
-      
-      if (ImGui::Button("Сохранить")) {
-        std::cout << zcn::tree_to_json(tree.tree) << ";\n";
-      }
-      
-      char buffer[100];
-      ImGui::Dummy(ImVec2(90.0f, 0.0f));
-      std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
-      if (ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
-        tree_names.erase(tree.name);
-        tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
-      }
-      ImGui::Dummy(ImVec2(90.0f, 0.0f));
-      ImGui::EndMenuBar();
-
-      ImNodes::EditorContextSet(tree.context);
-
-      std::unordered_map<int, std::pair<float, float>> socket_positions;
-      zcn::nodes::draw(*tree.tree, socket_positions);
-      zcn::nodes::draw_log_overlay(*tree.tree, tree.view_log, socket_positions);
 
       ImGui::End();
     }
 
-    if (tree_to_delete != nullptr) {
-      tree_names.erase(tree_to_delete->name);
-      session.erase(session.begin() + std::distance<const MetaTree *>(&session[0], tree_to_delete));
+    std::vector<std::string> trees_names = {""};
+    std::unordered_map<std::string, zcn::TreePtr> trees_by_name;
+    for (MetaTree &tree : session) {
+      trees_names.push_back(tree.name);
+      trees_by_name[tree.name] = tree.tree;
+    }
+    std::sort(trees_names.begin(), trees_names.end());
+
+    for (MetaTree &tree : session) {
+      if (ImGui::Begin(tree.internal_name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar)) {
+        if (new_tree == &tree) {
+          ImGui::SetWindowPos({500, 500});
+          ImGui::SetWindowSize({500, 500});
+        }
+
+        if (ImGui::BeginMenuBar()) {
+          char buffer[100];
+          ImGui::Dummy(ImVec2(90.0f, 0.0f));
+          std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+          if (ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags(), nullptr, nullptr)) {
+            tree_names.erase(tree.name);
+            tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+          }
+          ImGui::Dummy(ImVec2(90.0f, 0.0f));
+          ImGui::EndMenuBar();
+        }
+
+        ImNodes::EditorContextSet(tree.context);
+
+        std::unordered_map<int, std::pair<float, float>> socket_positions;
+        zcn::set_trees_context(&trees_by_name);
+        zcn::nodes::draw(*tree.tree, trees_names, socket_positions);
+        zcn::nodes::draw_log_overlay(*tree.tree, tree.view_log, socket_positions);
+
+        ImGui::End();
+      }
     }
 
     ImGui::Render();
@@ -223,11 +257,11 @@ int main()
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
-    
-    
+
     for (MetaTree &tree : session) {
       zcn::VirtualFileSystemProvider side_effect_provider;
-      zcn::execute(tree.tree, tree.view_log, side_effect_provider);
+      std::vector<zcn::BaseProvider *> providers;
+      zcn::execute(tree.tree, tree.view_log, providers);
     }
   }
 

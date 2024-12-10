@@ -1,0 +1,6 @@
+Package: imgui
+Feature: libigl-imgui
+Architecture: x86-windows-static
+Multi-Arch: same
+Description: Install the libigl-imgui headers
+Status: install ok installed

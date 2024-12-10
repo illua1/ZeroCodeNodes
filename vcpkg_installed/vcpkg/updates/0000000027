@@ -1,0 +1,8 @@
+Package: mathter
+Version: 2.0.0
+Depends: vcpkg-cmake:x64-windows, vcpkg-cmake-config:x64-windows, xsimd
+Architecture: x86-windows-static
+Multi-Arch: same
+Abi: 8b426ef2c54a7a702ea5dac0dc07eae62b411fd981ac6c82189bd9827852289a
+Description: A flexible and fast matrix, transform, and geometry library.
+Status: install ok installed

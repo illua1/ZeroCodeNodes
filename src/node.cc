@@ -8,6 +8,7 @@ namespace zcn {
 
 class CreationDeclarationContext : public DeclarationContext {
   int &total_uid_;
+  int index = 0;
   std::vector<int> &uids_;
  public:
   CreationDeclarationContext(int &total_uid, std::vector<int> &uids) : total_uid_(total_uid), uids_(uids) {}
@@ -15,29 +16,41 @@ class CreationDeclarationContext : public DeclarationContext {
 
   void add_input(const DataType type, std::string name) override
   {
-    const int input_uid = total_uid_++;
-    uids_.push_back(input_uid);
+    const int input_uid = index++;
+    uids_.push_back(input_uid + 150);
   }
 
   void add_output(const DataType type, std::string name) override
   {
-    const int input_uid = total_uid_++;
+    const int input_uid = index++;
     uids_.push_back(input_uid);
   }
 
   void add_data(const DataType /*type*/, std::string /*name*/) override {}
+};
 
-  int add_selector(const std::string /*name*/, const int selected, const std::vector<std::string> &/*options*/) override { return selected; }
+static std::string new_node_name(const std::vector<std::string> &names, std::string start) {
+  if (std::find(names.begin(), names.end(), start) != names.end()) {
+    return std::move(start);
+  }
+  const std::string separator = (start.back() == '.' ? "" : ".");
+  int iter = 1;
+  while (std::find(names.begin(), names.end(), start + separator + std::to_string(iter)) != names.end()) {
+    iter++;
+  }
+  return start + separator + std::to_string(iter);
 };
 
 int add_node_to_tree(NodeTree &tree, const std::string node_type)
 {
   NodePtr new_node = create_node_by_name(node_type);
-  const int node_uid = tree.total_uid++;
+  const int node_uid = tree.total_uid;
+  tree.total_uid += 300;
 
   tree.nodes.push_back(std::move(new_node));
   tree.nodes_uid.push_back(node_uid);
   tree.node_labels.push_back(node_type);
+  tree.node_names.push_back(new_node_name(tree.node_names, node_type));
 
   std::vector<int> socket_uid;
   CreationDeclarationContext node_decl(tree.total_uid, socket_uid);
@@ -52,6 +65,7 @@ void drop_node_from_tree(NodeTree &tree, const int node_index)
   tree.nodes.erase(tree.nodes.begin() + node_index);
   tree.nodes_uid.erase(tree.nodes_uid.begin() + node_index);
   tree.node_labels.erase(tree.node_labels.begin() + node_index);
+  tree.node_names.erase(tree.node_names.begin() + node_index);
 }
 
 int add_link_from_tree(NodeTree &tree, std::pair<int, int> link)
@@ -72,7 +86,7 @@ void drop_link_from_tree(NodeTree &tree, int link_uid)
 
 TreePtr new_tree()
 {
-  return std::make_unique<NodeTree>();
+  return std::make_shared<NodeTree>();
 }
 
 }
@@ -102,7 +116,7 @@ void register_node_type(std::string type_name, std::function<NodePtr()> construc
 
 NodePtr create_node_by_name(const std::string type_name)
 {
-  return node_types()[type_name]();
+  return node_types().at(type_name)();
 }
 
 void register_node_types()
@@ -135,6 +149,9 @@ void register_node_types()
   register_node_loop_node_type();
   register_node_switch_node_type();
 
+  register_node_input_node_type();
+  register_node_output_node_type();
+
   register_node_question_node_type();
   
   register_node_end_node_type();
@@ -147,6 +164,32 @@ std::vector<std::string> all_node_types()
     list.push_back(item.first);
   }
   return list;
+}
+
+}
+
+namespace zcn {
+
+static const std::unordered_map<std::string, TreePtr> *&context_forest_map_ptr()
+{
+  static const std::unordered_map<std::string, TreePtr> *ptr = nullptr;
+  return ptr;
+}
+
+void set_trees_context(const std::unordered_map<std::string, TreePtr> *forest)
+{
+  context_forest_map_ptr() = forest;
+}
+
+const TreePtr find_tree(const std::string &name)
+{
+  if (name == "") {
+    return nullptr;
+  }
+  if (context_forest_map_ptr() != nullptr) {
+    return context_forest_map_ptr()->at(name);
+  }
+  return nullptr;
 }
 
 }

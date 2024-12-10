@@ -34,5 +34,7 @@
 # Build Folder
 /build
 
+/vcpkg_installed
+
 # ImGUI tmp file
 *.ini

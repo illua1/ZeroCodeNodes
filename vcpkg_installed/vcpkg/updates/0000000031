@@ -1,0 +1,6 @@
+Package: nlohmann-json
+Feature: diagnostics
+Architecture: x86-windows-static
+Multi-Arch: same
+Description: Build json_diagnostics
+Status: install ok installed

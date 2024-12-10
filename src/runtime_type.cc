@@ -122,4 +122,34 @@ RData ensure_type(const DataType type, RData source)
   return result_value;
 }
 
+std::string data_type_to_name(DataType type)
+{
+  switch (type) {
+    case DataType::Bool:
+      return "Bool";
+    case DataType::Int:
+      return "Int";
+    case DataType::Float:
+      return "Float";
+    case DataType::Text:
+      return "Text";
+  }
+}
+
+DataType name_to_data_type(const std::string &name)
+{
+  if (name == "Bool") {
+    return DataType::Bool;
+  }
+  if (name == "Int") {
+    return DataType::Int;
+  }
+  if (name == "Float") {
+    return DataType::Float;
+  }
+  if (name == "Text") {
+    return DataType::Text;
+  }
+}
+
 }

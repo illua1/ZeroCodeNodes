@@ -28,7 +28,9 @@ find_package(Mathter REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
+
+set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
+find_package(nlohmann_json REQUIRED)
 
 
 include(FetchContent)
@@ -42,8 +44,8 @@ FetchContent_Declare(GLFWPP
   PATCH_COMMAND ${glfwpp_patch_1}
 )
 
-FetchContent_MakeAvailable(GLFWPP)
 set(GLFWPP_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(GLFWPP)
 
 # ImGUI-base nodes
 FetchContent_Declare(imnodes
@@ -77,9 +79,11 @@ set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_file_write.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_foreach_file.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_int_input.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_float_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_string_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_math.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_output.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_compare_value.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_string_up.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_string_down.cc
