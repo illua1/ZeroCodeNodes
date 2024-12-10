@@ -24,6 +24,9 @@ class LoopNode : public Node {
   {
     loop_body_tree_name_ = std::move(decl.add_tree_selector("Тело цикла", std::move(loop_body_tree_name_)));
     const TreePtr tree = find_tree(loop_body_tree_name_);
+    
+    decl.add_input<int>("Повторы");
+    
     if (!tree) {
       return;
     }
@@ -47,6 +50,15 @@ class LoopNode : public Node {
       inputs[item.value_name] = context.get_input(item.type, item.value_name);
     }
 
+    const int repeats = context.get_input<int>("Повторы");
+
+    const std::vector<IterfaceItem> output_items = this->tree_to_outputs(tree);
+    if (repeats < 1) {
+      for (int index = 0; index < output_items.size(); index++) {
+        context.set_output(output_items[index].value_name, defult_value(output_items[index].type));
+      }
+      return;
+    }
 
     std::unordered_map<std::string, RData> outputs;
     SubTreeExecutionProvider execute_context(inputs, outputs);
@@ -54,10 +66,17 @@ class LoopNode : public Node {
     std::vector<BaseProvider *> context_stack = context.context_providers();
     context_stack.insert(context_stack.begin(), &execute_context);
 
-    ExecuteLog log;
-    zcn::execute(tree, log, context_stack);
 
-    const std::vector<IterfaceItem> output_items = this->tree_to_outputs(tree);
+    std::unordered_map<std::string, RData> next_inputs;
+    for (int index = 0; index < repeats; index++) {
+      ExecuteLog log;
+      zcn::execute(tree, log, context_stack);
+      for (int index = 0; index < input_items.size(); index++) {
+        next_inputs[input_items[index].value_name] = outputs[output_items[index].value_name];
+      }
+      std::swap(next_inputs, inputs);
+    }
+
     for (int index = 0; index < output_items.size(); index++) {
       context.set_output(output_items[index].value_name, outputs.at(output_items[index].value_name));
     }
