@@ -30,6 +30,9 @@ class CreationDeclarationContext : public DeclarationContext {
 };
 
 static std::string new_node_name(const std::vector<std::string> &names, std::string start) {
+  if (start == "") {
+    return new_node_name(names, "AAAAAAAAAA");
+  }
   if (std::find(names.begin(), names.end(), start) != names.end()) {
     return std::move(start);
   }
@@ -187,6 +190,9 @@ const TreePtr find_tree(const std::string &name)
     return nullptr;
   }
   if (context_forest_map_ptr() != nullptr) {
+    if (context_forest_map_ptr()->find(name) == context_forest_map_ptr()->end()) {
+      return nullptr;
+    }
     return context_forest_map_ptr()->at(name);
   }
   return nullptr;

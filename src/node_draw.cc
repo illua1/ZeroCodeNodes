@@ -481,7 +481,7 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
     }
 
     const std::pair<float, float> position_pair = socket_positions_.at(socket_uid);
-    const RData &log_value = log_.socket_value.at(socket_path);
+    const RData &log_value = ensure_type(type, log_.socket_value.at(socket_path));
 
     constexpr int offset = 6;
 

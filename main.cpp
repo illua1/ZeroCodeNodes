@@ -116,6 +116,7 @@ int main()
   std::unordered_set<std::string> internal_tree_names;
 
   const auto new_tree_name = [](std::unordered_set<std::string> &tree_names, std::string start) -> std::string {
+    start = start == "" ? "AAAA" : start;
     if (tree_names.insert(start).second) {
       return std::move(start);
     }
