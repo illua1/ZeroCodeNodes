@@ -94,6 +94,8 @@ using TreePtr = std::shared_ptr<NodeTree>;
 
 TreePtr new_tree();
 
+void validate_links(NodeTree &tree);
+
 }
 
 namespace zcn {

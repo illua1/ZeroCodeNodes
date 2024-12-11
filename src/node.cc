@@ -2,6 +2,8 @@
 #include "ZCN_node.hh"
 
 #include <cassert>
+#include <algorithm>
+#include <unordered_set>
 #include <unordered_map>
 
 namespace zcn {
@@ -120,6 +122,62 @@ void register_node_type(std::string type_name, std::function<NodePtr()> construc
 NodePtr create_node_by_name(const std::string type_name)
 {
   return node_types().at(type_name)();
+}
+
+class ExistSocketsDeclarationContext : public DeclarationContext {
+  NodeTree &tree_;
+  const int node_uid_;
+  std::unordered_set<int> &exist_sockets_;
+  int index_ = 0;
+ public:
+  ExistSocketsDeclarationContext(NodeTree &tree, const int node_uid, std::unordered_set<int> &exist_sockets) : tree_(tree), node_uid_(node_uid), exist_sockets_(exist_sockets) {}
+
+  ~ExistSocketsDeclarationContext() override = default;
+
+  void add_input(const DataType type, std::string name) override
+  {
+    index_++;
+    exist_sockets_.insert(node_uid_ + 150 + index_);
+  }
+
+  void add_output(const DataType type, std::string name) override
+  {
+    index_++;
+    exist_sockets_.insert(node_uid_ + index_);
+  }
+
+  void add_data(const DataType /*type*/, std::string /*name*/) override {}
+};
+
+void validate_links(NodeTree &tree)
+{
+  std::unordered_set<int> exist_sockets;
+
+  for (int node_index = 0; node_index < tree.nodes.size(); node_index++) {
+    NodePtr &node = tree.nodes[node_index];
+    ExistSocketsDeclarationContext declaration(tree, tree.nodes_uid[node_index], exist_sockets);
+    node->declare(declaration);
+  }
+
+  std::vector<bool> links_to_delete;
+  links_to_delete.resize(tree.links.size());
+  std::transform(tree.links.begin(), tree.links.end(), links_to_delete.begin(), [&](const std::pair<int, int> link) {
+    if (exist_sockets.find(link.first) == exist_sockets.end()) {
+      return false;
+    }
+    if (exist_sockets.find(link.second) == exist_sockets.end()) {
+      return false;
+    }
+    return true;
+  });
+
+  tree.links.erase(std::remove_if(tree.links.begin(), tree.links.end(), [&](auto &item) {
+    return !links_to_delete[std::distance(&tree.links[0], &item)];
+  }), tree.links.end());
+
+  tree.links_uid.erase(std::remove_if(tree.links_uid.begin(), tree.links_uid.end(), [&](auto &item) {
+    return !links_to_delete[std::distance(&tree.links_uid[0], &item)];
+  }), tree.links_uid.end());
 }
 
 void register_node_types()

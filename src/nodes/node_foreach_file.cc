@@ -31,7 +31,7 @@ namespace zcn {
 
 void register_node_foreach_file_node_type()
 {
-  register_node_type("Повторять", []() -> NodePtr {
+  register_node_type("По файлам", []() -> NodePtr {
     return std::make_unique<node::foreach_file::ForeachFile>();
   });
 }

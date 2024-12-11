@@ -71,7 +71,7 @@ class LoopNode : public Node {
     for (int index = 0; index < repeats; index++) {
       ExecuteLog log;
       zcn::execute(tree, log, context_stack);
-      for (int index = 0; index < input_items.size(); index++) {
+      for (int index = 0; index < std::min(input_items.size(), output_items.size()); index++) {
         next_inputs[input_items[index].value_name] = outputs[output_items[index].value_name];
       }
       std::swap(next_inputs, inputs);

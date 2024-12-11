@@ -2,13 +2,9 @@
 #include <iostream>
 
 #include <string>
-#include <locale>
 #include <memory>
 #include <cwctype>
 #include <algorithm>
-#include <locale>
-#include <codecvt>
-#include <string>
 
 #include "ZCN_node.hh"
 #include "ZCN_node_json.hh"
@@ -26,6 +22,7 @@ static void tree_and_json(Tree &tree, const Func &func)
   func(tree.nodes_uid, "nodes_uid");
   func(tree.node_sockets_uid, "node_sockets_uid");
   func(tree.node_labels, "node_labels");
+  func(tree.node_names, "node_names");
   func(tree.links_uid, "links_uid");
   func(tree.links, "links");
   func(tree.values, "values");
@@ -37,11 +34,6 @@ using clean_type = typename std::remove_cv<typename std::remove_reference<T>::ty
 std::string tree_to_json(const TreePtr &tree)
 {
   json obj;
-
-//  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-//  std::wstring textw = converter.from_bytes(text);
-//  std::wstring tokenw = converter.from_bytes(token);
-
 
   tree_and_json(*tree, [&](auto &in, std::string name) {
     if constexpr (std::is_same_v<clean_type<decltype(TreePtr::element_type::values)>, clean_type<decltype(in)>>) {
@@ -66,9 +58,8 @@ std::string tree_to_json(const TreePtr &tree)
 
 TreePtr tree_from_json(const std::string &json_text)
 {
-  std::cout << json_text << ";\n";
   const json obj = json::parse(json_text);
-  
+
   TreePtr raw_tree = std::make_unique<NodeTree>();
 
   tree_and_json(*raw_tree, [&](auto &in, const std::string name) {
@@ -87,9 +78,9 @@ TreePtr tree_from_json(const std::string &json_text)
       in = obj.at(name).get<clean_type<decltype(in)>>();
     }
   });
-  
+
   for (const std::string &label : raw_tree->node_labels) {
-    add_node_to_tree(*raw_tree, label);
+    raw_tree->nodes.push_back(create_node_by_name(label));
   }
   
   return raw_tree;

@@ -273,34 +273,10 @@ class ImNodesDeclarationContext : public DeclarationContext {
   }
 };
 
-class ExistSocketsDeclarationContext : public DeclarationContext {
-  NodeTree &tree_;
-  const int node_uid_;
-  std::unordered_set<int> &exist_sockets_;
-  int index_ = 0;
- public:
-  ExistSocketsDeclarationContext(NodeTree &tree, const int node_uid, std::unordered_set<int> &exist_sockets) : tree_(tree), node_uid_(node_uid), exist_sockets_(exist_sockets) {}
-
-  ~ExistSocketsDeclarationContext() override = default;
-
-  void add_input(const DataType type, std::string name) override
-  {
-    index_++;
-    exist_sockets_.insert(node_uid_ + 150 + index_);
-  }
-
-  void add_output(const DataType type, std::string name) override
-  {
-    index_++;
-    exist_sockets_.insert(node_uid_ + index_);
-  }
-
-  void add_data(const DataType /*type*/, std::string /*name*/) override {}
-};
-
-
 void draw(NodeTree &tree, const std::vector<std::string> &trees_names, std::unordered_map<int, std::pair<float, float>> &r_socket_positions)
 {
+  validate_links(tree);
+
   if (ImGui::BeginMenuBar()) {
 
     bool openpopuptemp = false;
@@ -361,9 +337,16 @@ void draw(NodeTree &tree, const std::vector<std::string> &trees_names, std::unor
     ImNodesDeclarationContext declaration(tree, node_index, linked_sockets, r_socket_positions, trees_names);
     node->declare(declaration);
     
+    {
+      StateUpdateDeclarationContext ensure_socket_uid(tree.nodes_uid[node_index], tree.node_sockets_uid[node_index]);
+      tree.nodes[node_index]->declare(ensure_socket_uid);
+    }
+    
     ImGui::PopItemWidth();
     ImNodes::EndNode();
   }
+
+  validate_links(tree);
 
   for (int link_index = 0; link_index < tree.links.size(); link_index++) {
     const std::pair<int, int> link = tree.links[link_index];
@@ -379,34 +362,6 @@ void draw(NodeTree &tree, const std::vector<std::string> &trees_names, std::unor
   if (int link_uid; ImNodes::IsLinkHovered(&link_uid) && ImGui::IsKeyPressed(ImGuiKey_MouseRight)) {
     zcn::drop_link_from_tree(tree, link_uid);
   }
-
-  std::unordered_set<int> exist_sockets;
-
-  for (int node_index = 0; node_index < tree.nodes.size(); node_index++) {
-    NodePtr &node = tree.nodes[node_index];
-    ExistSocketsDeclarationContext declaration(tree, tree.nodes_uid[node_index], exist_sockets);
-    node->declare(declaration);
-  }
-
-  std::vector<bool> links_to_delete;
-  links_to_delete.resize(tree.links.size());
-  std::transform(tree.links.begin(), tree.links.end(), links_to_delete.begin(), [&](const std::pair<int, int> link) {
-    if (exist_sockets.find(link.first) == exist_sockets.end()) {
-      return false;
-    }
-    if (exist_sockets.find(link.second) == exist_sockets.end()) {
-      return false;
-    }
-    return true;
-  });
-
-  tree.links.erase(std::remove_if(tree.links.begin(), tree.links.end(), [&](auto &item) {
-    return !links_to_delete[std::distance(&tree.links[0], &item)];
-  }), tree.links.end());
-
-  tree.links_uid.erase(std::remove_if(tree.links_uid.begin(), tree.links_uid.end(), [&](auto &item) {
-    return !links_to_delete[std::distance(&tree.links_uid[0], &item)];
-  }), tree.links_uid.end());
   
 }
 

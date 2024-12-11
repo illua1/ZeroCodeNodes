@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.29)
 
 set(CMAKE_BUILD_TYPE "DEBUG")
 

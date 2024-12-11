@@ -4,6 +4,8 @@
 #include <unordered_set>
 #include <numeric>
 #include <string>
+#include <iostream>
+#include <fstream>
 
 #include "src/ZCN_execute.hh"
 #include "src/ZCN_node.hh"
@@ -26,6 +28,8 @@
 #include <GL/glew.h>
 
 #include <glfwpp/glfwpp.h>
+
+#include <nlohmann/json.hpp>
 
 /*
 
@@ -130,9 +134,30 @@ int main()
 
   zcn::register_node_types();
   std::vector<MetaTree> session;
-  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
-  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
-  session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+  
+  {
+    std::ifstream autosave_file("autosave.zcn");
+    if (autosave_file.is_open()) {
+      std::string value;
+      autosave_file >> value;
+      nlohmann::json load = nlohmann::json::parse(value);
+
+      for (auto item : load) {
+        MetaTree tree(item["name"].get<std::string>(), item["internal_name"].get<std::string>());
+        tree.tree = std::move(zcn::tree_from_json(item["topology"].get<std::string>()));
+        session.push_back(std::move(tree));
+      }
+
+      std::cout << load;
+
+      autosave_file.close();
+
+    } else {
+      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+    }
+  }
 
   window.dropEvent.setCallback([&](glfw::Window &/*window*/, const std::vector<const char*> &list) {
     for (const char *path : list) {
@@ -222,6 +247,7 @@ int main()
       trees_by_name[tree.name] = tree.tree;
     }
     std::sort(trees_names.begin(), trees_names.end());
+    zcn::set_trees_context(&trees_by_name);
 
     for (MetaTree &tree : session) {
       if (ImGui::Begin(tree.internal_name.c_str(), nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar)) {
@@ -245,7 +271,6 @@ int main()
         ImNodes::EditorContextSet(tree.context);
 
         std::unordered_map<int, std::pair<float, float>> socket_positions;
-        zcn::set_trees_context(&trees_by_name);
         zcn::nodes::draw(*tree.tree, trees_names, socket_positions);
         zcn::nodes::draw_log_overlay(*tree.tree, tree.view_log, socket_positions);
 
@@ -263,6 +288,23 @@ int main()
       zcn::VirtualFileSystemProvider side_effect_provider;
       std::vector<zcn::BaseProvider *> providers;
       zcn::execute(tree.tree, tree.view_log, providers);
+    }
+  }
+  
+  {
+    std::ofstream autosave_file("autosave.zcn");
+    if (autosave_file.is_open()) {
+      nlohmann::json save;
+      for (MetaTree &tree : session) {
+        nlohmann::json tree_info;
+        tree_info["name"] = tree.name;
+        tree_info["internal_name"] = tree.internal_name;
+        tree_info["topology"] = zcn::tree_to_json(tree.tree);
+        save.push_back(tree_info);
+      }
+      autosave_file << save.dump();
+      autosave_file.close();
+
     }
   }
 
