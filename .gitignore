@@ -36,5 +36,7 @@
 
 /vcpkg_installed
 
+.zcn
+
 # ImGUI tmp file
 *.ini

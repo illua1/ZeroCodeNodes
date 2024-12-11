@@ -82,6 +82,11 @@ class LoopNode : public Node {
     }
   }
 
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_text(loop_body_tree_name_, "loop_body_tree_name_");
+  }
+
  private:
   std::vector<IterfaceItem> tree_to_inputs(const TreePtr tree) const
   {

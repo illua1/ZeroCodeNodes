@@ -65,6 +65,11 @@ class UpperCase : public Node {
     }
     context.set_output<std::string>("Текст", converter.to_bytes(testw));
   }
+
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_int(op_index, "op_index");
+  }
 };
 
 }

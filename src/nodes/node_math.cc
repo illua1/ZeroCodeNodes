@@ -122,6 +122,11 @@ class Math : public Node {
     
     context.set_output("Результат", 0);
   }
+
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_int(op_index, "op_index");
+  }
 };
 
 }

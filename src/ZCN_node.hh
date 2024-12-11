@@ -58,11 +58,20 @@ class ExecutionContext {
   virtual void set_output(const std::string name, RData value) = 0;
 };
 
+class DataVisitor {
+ public:
+  virtual ~DataVisitor() = default;
+  virtual void visit_text(std::string &data, const std::string &name) = 0;
+  virtual void visit_int(int &data, const std::string &name) = 0;
+  virtual void visit_float(float &data, const std::string &name) = 0;
+};
+
 class Node {
  public:
   virtual ~Node() = default;
   virtual void declare(DeclarationContext &decl) const = 0;
   virtual void execute(ExecutionContext &context) const = 0;
+  virtual void visit_data(DataVisitor &visitor) const;
 };
 
 class InterfaceNode : public Node {
@@ -231,6 +240,15 @@ namespace zcn {
 
 void set_trees_context(const std::unordered_map<std::string, TreePtr> *forest);
 const TreePtr find_tree(const std::string &name);
+
+}
+
+namespace zcn {
+
+inline void Node::visit_data(DataVisitor &/*visitor*/) const
+{
+  
+}
 
 }
 

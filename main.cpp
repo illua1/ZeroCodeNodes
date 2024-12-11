@@ -144,7 +144,7 @@ int main()
 
       for (auto item : load) {
         MetaTree tree(item["name"].get<std::string>(), item["internal_name"].get<std::string>());
-        tree.tree = std::move(zcn::tree_from_json(item["topology"].get<std::string>()));
+        tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
         session.push_back(std::move(tree));
       }
 
@@ -299,7 +299,7 @@ int main()
         nlohmann::json tree_info;
         tree_info["name"] = tree.name;
         tree_info["internal_name"] = tree.internal_name;
-        tree_info["topology"] = zcn::tree_to_json(tree.tree);
+        tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
         save.push_back(tree_info);
       }
       autosave_file << save.dump();

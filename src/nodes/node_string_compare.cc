@@ -50,6 +50,12 @@ class StringCmp : public Node {
     }
     context.set_output("Результат", result ^ (options[op_index] != "Равны"));
   }
+
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_int(op_index, "op_index");
+    visitor.visit_int(type_op_index, "type_op_index");
+  }
 };
 
 }

@@ -47,6 +47,11 @@ class Input : public InterfaceInputNode {
     context.set_output("Данные", in_tree->get_input(this->data_type(), name_of->name));
   }
 
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_int(data_type_index_, "data_type_index_");
+  }
+
   DataType data_type() const override
   {
     if (options[data_type_index_] == "Число") {

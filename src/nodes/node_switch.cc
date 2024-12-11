@@ -53,6 +53,11 @@ class Switch : public Node {
       context.set_output<std::string>("Вывод", index == 1 ? b : a);
     }
   }
+
+  void visit_data(DataVisitor &visitor) const override
+  {
+    visitor.visit_int(data_type_index_, "data_type_index_");
+  }
 };
 
 }
