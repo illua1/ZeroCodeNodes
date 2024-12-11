@@ -16,6 +16,41 @@
 
 namespace zcn {
 
+class EStateUpdateDeclarationContext : public DeclarationContext {
+  int node_uid_;
+  std::vector<int> &uids_;
+  int index_ = 0;
+  int output_ = 0;
+ public:
+  EStateUpdateDeclarationContext(const int node_uid, std::vector<int> &uids) : node_uid_(node_uid), uids_(uids) {
+    uids_.clear();
+  }
+  ~EStateUpdateDeclarationContext() override
+  {
+    uids_.resize(index_);
+  }
+
+  void add_input(const DataType type, std::string name) override
+  {
+    index_++;
+    if (index_ < uids_.size()) {
+      return;
+    }
+    uids_.push_back(node_uid_ + 150 + index_);
+  }
+
+  void add_output(const DataType type, std::string name) override
+  {
+    index_++;
+    if (index_ < uids_.size()) {
+      return;
+    }
+    uids_.push_back(node_uid_ + index_);
+  }
+
+  void add_data(const DataType /*type*/, std::string /*name*/) override {}
+};
+
 static void execute_from(const std::vector<std::vector<int>> &node_to_input_nodes,
                          const int start_node,
                          std::vector<bool> &visited_nodes,
@@ -81,6 +116,11 @@ RData BaseExecutionContext::get_input(DataType type, const std::string name)
   if (input_uid_to_output_uid_.find(socket_uid) == input_uid_to_output_uid_.end()) {
     const std::string socket_path = node_socket_to_path(node_uid_, socket_uid);
     
+    if (tree_values_.find(socket_path) == tree_values_.end()) {
+      execution_values_[socket_path] = defult_value(type);
+      return defult_value(type);
+    }
+    
     execution_values_[socket_path] = tree_values_.at(socket_path);
     
     return tree_values_.at(socket_path);
@@ -145,6 +185,11 @@ class TopologyDeclarationContext : public DeclarationContext {
 
 void execute(const TreePtr &tree, ExecuteLog &log, std::vector<BaseProvider *> providers)
 {
+  for (int node_index = 0; node_index < tree->nodes_uid.size(); node_index++) {
+      EStateUpdateDeclarationContext ensure_socket_uid(tree->nodes_uid[node_index], tree->node_sockets_uid[node_index]);
+      tree->nodes[node_index]->declare(ensure_socket_uid);
+    }
+  
   std::vector<std::vector<int>> nodes_inputs;
   std::vector<std::vector<int>> nodes_outputs;
   nodes_inputs.resize(tree->nodes_uid.size());
