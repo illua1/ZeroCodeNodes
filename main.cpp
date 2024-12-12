@@ -31,6 +31,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "shlobj.h"
+
 /*
 
 #undef MATHTER_ENABLE_SIMD
@@ -79,6 +81,21 @@ struct MetaTree {
   }
 };
 
+static std::string local_storage_path()
+{
+  TCHAR szPath[MAX_PATH];
+
+  if(SUCCEEDED(SHGetFolderPath(NULL, 
+                               CSIDL_APPDATA | CSIDL_FLAG_CREATE, 
+                               NULL, 
+                               0, 
+                               szPath))) 
+  {
+    return std::string(szPath) + "\\" + "zero_code_nodes_registry.txt";
+  }
+  return "";
+}
+
 int main()
 {
   [[maybe_unused]] const auto GLFW = glfw::init();
@@ -119,22 +136,30 @@ int main()
   tree_names.insert("");
   std::unordered_set<std::string> internal_tree_names;
 
+  std::unordered_set<std::string> local_storage_tree_names;
+  local_storage_tree_names.insert("");
+  std::unordered_set<std::string> local_storage_internal_tree_names;
+
   const auto new_tree_name = [](std::unordered_set<std::string> &tree_names, std::string start) -> std::string {
     start = start == "" ? "AAAA" : start;
-    if (tree_names.insert(start).second) {
+    if (tree_names.find(start) == tree_names.end()) {
+      tree_names.insert(start);
       return std::move(start);
     }
     const std::string separator = (start.back() == '.' ? "" : ".");
     int iter = 1;
-    while (!tree_names.insert(start + separator + std::to_string(iter)).second) {
+    while (tree_names.find(start + separator + std::to_string(iter)) != tree_names.end()) {
       iter++;
     }
+    tree_names.insert(start + separator + std::to_string(iter));
     return start + separator + std::to_string(iter);
   };
 
   zcn::register_node_types();
   std::vector<MetaTree> session;
   
+  std::vector<MetaTree> local_storage_session;
+
   {
     std::ifstream autosave_file("autosave.zcn");
     if (autosave_file.is_open()) {
@@ -159,6 +184,26 @@ int main()
     }
   }
 
+  {
+    std::ifstream autosave_file(local_storage_path());
+    if (autosave_file.is_open()) {
+      std::string value;
+      autosave_file >> value;
+      nlohmann::json load = nlohmann::json::parse(value);
+
+      for (auto item : load) {
+        MetaTree tree(item["name"].get<std::string>(), item["internal_name"].get<std::string>());
+        tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
+        local_storage_session.push_back(std::move(tree));
+      }
+
+      std::cout << load;
+
+      autosave_file.close();
+
+    }
+  }
+
   window.dropEvent.setCallback([&](glfw::Window &/*window*/, const std::vector<const char*> &list) {
     for (const char *path : list) {
       // zcn::add_nodes_for_path(tree, std::string(path));
@@ -174,6 +219,70 @@ int main()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    if (ImGui::Begin("Реестр", nullptr, ImGuiWindowFlags_MenuBar)) {
+      const MetaTree *tree_to_delete = nullptr;
+      const MetaTree *tree_to_copy = nullptr;
+
+      if (ImGui::BeginMenuBar()) {
+        if (ImGui::Button("Загрузить")) {
+        }
+        ImGui::EndMenuBar();
+      }
+
+      if (ImGui::BeginListBox("###Список программ", {-1.0f, -1.0f})) {
+        for (MetaTree &tree : local_storage_session) {
+
+          const auto item_draw_func = [&]() {
+            char buffer[100];
+            std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+            if (const std::string name_input_label = "###Name" + tree.internal_name;
+                ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
+              tree_names.erase(tree.name);
+              tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+            }
+
+            if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+              tree_to_delete = &tree;
+            }
+          };
+
+          ImGui::BeginGroup();
+          item_draw_func();
+          ImGui::EndGroup();
+
+          if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+            const MetaTree *ptr = &tree;
+            ImGui::SetDragDropPayload("ИзРег##Tree", &ptr, sizeof(&ptr), ImGuiCond_Once);
+            item_draw_func();
+            ImGui::EndDragDropSource();
+          }
+
+          ImGui::Separator();
+        }
+        ImGui::EndListBox();
+      }
+
+      if (ImGui::BeginDragDropTarget()) {
+        const auto payload = ImGui::AcceptDragDropPayload("ВРег##Tree");
+        if (payload != nullptr) {
+          const MetaTree *dragged_tree = *(MetaTree **)payload->Data;
+          zcn::TreePtr copy = zcn::tree_from_json(zcn::tree_to_json(dragged_tree->tree));
+          MetaTree meta_copy(new_tree_name(local_storage_tree_names, dragged_tree->name), new_tree_name(local_storage_internal_tree_names, dragged_tree->internal_name));
+          meta_copy.tree = std::move(copy);
+
+          local_storage_session.push_back(std::move(meta_copy));
+        }
+        ImGui::EndDragDropTarget();
+      }
+
+      if (tree_to_delete != nullptr) {
+        tree_names.erase(tree_to_delete->name);
+        local_storage_session.erase(local_storage_session.begin() + std::distance<const MetaTree *>(&local_storage_session[0], tree_to_delete));
+      }
+
+      ImGui::End();
+    }
 
     const MetaTree *new_tree = nullptr;
     if (ImGui::Begin("Программы", nullptr, ImGuiWindowFlags_MenuBar)) {
@@ -193,33 +302,55 @@ int main()
       if (ImGui::BeginListBox("###Список программ", {-1.0f, -1.0f})) {
         for (MetaTree &tree : session) {
 
-          char buffer[100];
-          std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
-          if (const std::string name_input_label = "###Name" + tree.internal_name;
-              ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
-            tree_names.erase(tree.name);
-            tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
-          }
+          const auto item_draw_func = [&]() {
+            char buffer[100];
+            std::strncpy(buffer, tree.name.c_str(), std::min<int>(sizeof(buffer), tree.name.size() + 1));
+            if (const std::string name_input_label = "###Name" + tree.internal_name;
+                ImGui::InputText(name_input_label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
+              tree_names.erase(tree.name);
+              tree.name = new_tree_name(tree_names, std::string(std::string_view(buffer)));
+            }
+
+            if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+              tree_to_delete = &tree;
+            }
+
+            if (const std::string delete_button_label = "Копировать###Copy" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+              tree_to_copy = &tree;
+            }
+
+            if (const std::string delete_button_label = "Сохранить###Save" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
+              // std::cout << zcn::tree_to_json(tree.tree) << ";\n";
+            }
+          };
 
           ImGui::BeginGroup();
-
-          if (const std::string delete_button_label = "Удалить###Delete" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
-            tree_to_delete = &tree;
-          }
-
-          if (const std::string delete_button_label = "Копировать###Copy" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
-            tree_to_copy = &tree;
-          }
-
-          if (const std::string delete_button_label = "Сохранить###Save" + tree.internal_name; ImGui::Button(delete_button_label.c_str())) {
-            // std::cout << zcn::tree_to_json(tree.tree) << ";\n";
-          }
-
+          item_draw_func();
           ImGui::EndGroup();
+          if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+            const MetaTree *ptr = &tree;
+            ImGui::SetDragDropPayload("ВРег##Tree", &ptr, sizeof(&ptr), ImGuiCond_Once);
+            item_draw_func();
+            ImGui::EndDragDropSource();
+          }
 
           ImGui::Separator();
         }
         ImGui::EndListBox();
+      }
+
+      if (ImGui::BeginDragDropTarget()) {
+        const auto payload = ImGui::AcceptDragDropPayload("ИзРег##Tree");
+        if (payload != nullptr) {
+          const MetaTree *dragged_tree = *(MetaTree **)payload->Data;
+          zcn::TreePtr copy = zcn::tree_from_json(zcn::tree_to_json(dragged_tree->tree));
+          MetaTree meta_copy(new_tree_name(tree_names, dragged_tree->name), new_tree_name(internal_tree_names, dragged_tree->internal_name));
+          meta_copy.tree = std::move(copy);
+
+          session.push_back(std::move(meta_copy));
+          new_tree = &session.back();
+        }
+        ImGui::EndDragDropTarget();
       }
 
       if (tree_to_delete != nullptr) {
@@ -290,12 +421,29 @@ int main()
       zcn::execute(tree.tree, tree.view_log, providers);
     }
   }
-  
+
   {
     std::ofstream autosave_file("autosave.zcn");
     if (autosave_file.is_open()) {
       nlohmann::json save;
       for (MetaTree &tree : session) {
+        nlohmann::json tree_info;
+        tree_info["name"] = tree.name;
+        tree_info["internal_name"] = tree.internal_name;
+        tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
+        save.push_back(tree_info);
+      }
+      autosave_file << save.dump();
+      autosave_file.close();
+
+    }
+  }
+  
+  {
+    std::ofstream autosave_file(local_storage_path());
+    if (autosave_file.is_open()) {
+      nlohmann::json save;
+      for (MetaTree &tree : local_storage_session) {
         nlohmann::json tree_info;
         tree_info["name"] = tree.name;
         tree_info["internal_name"] = tree.internal_name;
