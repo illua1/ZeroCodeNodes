@@ -32,22 +32,7 @@
 #include <nlohmann/json.hpp>
 
 #include "shlobj.h"
-
-/*
-
-#undef MATHTER_ENABLE_SIMD
-
-#include <Mathter/Vector.hpp>
-#include <Mathter/Matrix.hpp>
-
-namespace math = mathter;
-
-using float2 = math::Vector<float, 2>;
-using float3 = math::Vector<float, 3>;
-
-using float3x3 = math::Matrix<float, 3, 3>;
-
-*/
+#include "BaseTsd.h"
 
 static const std::string glsl_version = "#version 130";
 
@@ -96,8 +81,46 @@ static std::string local_storage_path()
   return "";
 }
 
-int main()
+static void try_to_reg_ext(const std::string ext = ".zcn")
 {
+  std::string desc = "my file type";
+
+  CHAR exe_path[MAX_PATH];
+  GetModuleFileName(NULL, exe_path, MAX_PATH);
+
+  std::string app = std::string(exe_path) + " %1";
+  std::string action = "Open with my program";
+
+  std::string sub = "\\shell\\";
+
+  std::string path = ext + sub + action + "\\" + "command\\";
+
+  HKEY hkey;
+  if(RegCreateKeyEx(HKEY_CLASSES_ROOT, ext.c_str(), 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, 0) != ERROR_SUCCESS) {
+    std::cerr << "Error 1\n";
+    return;
+  }
+  RegSetValueEx(hkey, "", 0, REG_SZ, reinterpret_cast<const BYTE *>(desc.c_str()), desc.size());
+  RegCloseKey(hkey);
+
+  if(RegCreateKeyEx(HKEY_CLASSES_ROOT, path.c_str(), 0, 0, 0, KEY_ALL_ACCESS, 0, &hkey, 0) != ERROR_SUCCESS) {
+    std::cerr << "Error 2\n";
+    return;
+  }
+  RegSetValueEx(hkey, "", 0, REG_SZ, reinterpret_cast<const BYTE *>(app.c_str()), app.size());
+
+  RegCloseKey(hkey);
+}
+
+int main(int argc, char *argv[])
+{
+  std::cout << argc << ";\n";
+  if (argc > 1) {
+    std::cout << ": " << argv[1] << ";\n";
+  } 
+
+  try_to_reg_ext(".zcn");
+
   [[maybe_unused]] const auto GLFW = glfw::init();
 
   glfw::Window window(640, 480, "Zero Code Nodes");
