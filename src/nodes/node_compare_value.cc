@@ -8,12 +8,12 @@ namespace zcn::node::compare_value {
 
 const static std::vector<std::string> options = {"Равно", "Больше", "Меньше", "Не равно"};
 
-class Math : public Node {
+class CompareValue : public Node {
   mutable int op_index = 0;
  public:
-  Math() = default;
+  CompareValue() = default;
 
-  ~Math() override = default;
+  ~CompareValue() override = default;
 
   void declare(DeclarationContext &decl) const override
   {
@@ -66,7 +66,7 @@ namespace zcn {
 void register_node_compare_value_node_type()
 {
   register_node_type("Сравнить числа", []() -> NodePtr {
-    return std::make_unique<node::compare_value::Math>();
+    return std::make_unique<node::compare_value::CompareValue>();
   });
 }
 

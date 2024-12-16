@@ -104,5 +104,6 @@ set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
               )
 add_library(nodes_lib STATIC ${NODES_LIB})
 target_link_libraries(nodes_lib PRIVATE internal_nodes)
+target_link_libraries(nodes_lib PRIVATE ${EXTERNAL_DEPS})
 
 target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS} internal_lib nodes_lib)

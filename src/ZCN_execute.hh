@@ -10,6 +10,14 @@
 #include "ZCN_node.hh"
 #include "ZCN_runtime_type.hh"
 
+#include <GL/glew.h>
+
+#include <glfwpp/glfwpp.h>
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 namespace zcn {
 
 struct ExecuteLog {
@@ -127,6 +135,29 @@ class TreeExecutionContext {
  public:
   virtual RData get_input(DataType type, const std::string name) = 0;
   virtual void set_output(const std::string name, RData value) = 0;
+};
+
+class GUIExecutionProvider : public BaseProvider {
+  glfw::Window &context_window_;
+  ImGuiContext *gui_context_;
+ public:
+
+  class WindowsProvider {
+    GUIExecutionProvider &owner_;
+    glfw::Window data_;
+    ImGuiContext *gui_context_;
+   public:
+    WindowsProvider(GUIExecutionProvider &owner, const std::string &name);
+    WindowsProvider(WindowsProvider &&other) : owner_(other.owner_), data_(std::move(other.data_)), gui_context_(other.gui_context_) { other.gui_context_ = nullptr; }
+    ~WindowsProvider();
+    bool is_open() const;
+    bool button_try(const std::string name) const;
+  };
+
+  GUIExecutionProvider(glfw::Window &context_window, ImGuiContext *gui_context) : context_window_(context_window), gui_context_(gui_context) {};
+  ~GUIExecutionProvider() override = default;
+
+  WindowsProvider get_window(const std::string name) const;
 };
 
 }

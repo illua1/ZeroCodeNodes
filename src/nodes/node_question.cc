@@ -1,5 +1,6 @@
 
 #include "../ZCN_node.hh"
+#include "../ZCN_execute.hh"
 
 #include <string>
 #include <memory>
@@ -14,14 +15,29 @@ class QuestionNode : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_input<float>("Значение");
-    decl.add_input<std::string>("Текст");
+    decl.add_input<std::string>("Вопрос");
+    decl.add_output<int>("Ответ");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.get_input<float>("Значение");
-    context.get_input<std::string>("Текст");
+    const std::string question_label = context.get_input<std::string>("Вопрос");
+    
+    const auto *windows_owner = context.context_provider<GUIExecutionProvider *>();
+    if (windows_owner == nullptr) {
+      return;
+    }
+
+    auto window = windows_owner->get_window("Вопросик");
+    
+    while (window.is_open()) {
+      if (window.button_try(question_label)) {
+        context.set_output<int>("Ответ", 1);
+        return;
+      }
+    }
+
+    context.set_output<int>("Ответ", 0);
   }
 };
 

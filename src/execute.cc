@@ -306,4 +306,104 @@ void SubTreeExecutionProvider::set_output(const std::string name, RData value)
   output_for_node_name_[name] = std::move(value);
 }
 
+// static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+// {
+//   ImGui::SetCurrentContext(secondary_context);
+// 
+//   ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+// 
+//   ImGui::SetCurrentContext(g);
+// }
+// 
+// static void set_cursor_pos_callback(GLFWwindow* window, double x, double y)
+// {
+//   ImGui::SetCurrentContext(secondary_context);
+// 
+//   ImGui_ImplGlfw_CursorPosCallback(window, x, y);
+// 
+//   ImGui::SetCurrentContext(main_context);
+// }
+
+GUIExecutionProvider::WindowsProvider::WindowsProvider(GUIExecutionProvider &owner, const std::string &name) : owner_(owner),
+    data_(glfw::Window(100, 50, name.c_str())), gui_context_(ImGui::CreateContext())
+{
+  glfw::makeContextCurrent(data_);
+
+  ImGui::SetCurrentContext(gui_context_);
+
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  ImGui::StyleColorsDark();
+
+  ImGui::GetStyle().WindowRounding = 0.0f;
+
+  ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+  ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+
+  ImGui_ImplGlfw_InitForOpenGL(data_, true);
+  ImGui_ImplOpenGL3_Init();
+
+  // glfwSetMouseButtonCallback(window, []);
+  // glfwSetCursorPosCallback(window, set_cursor_pos_callback);
+
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+  ImGui::Begin("Question Window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
+}
+
+GUIExecutionProvider::WindowsProvider::~WindowsProvider()
+{
+  ImGui::End();
+  ImGui::EndFrame();
+  ImGui::Render();
+  glfw::pollEvents();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  const_cast<glfw::Window &>(data_).swapBuffers();
+  if (gui_context_ != nullptr) {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext(gui_context_);
+  }
+
+  ImGui::SetCurrentContext(owner_.gui_context_);
+}
+
+bool GUIExecutionProvider::WindowsProvider::button_try(const std::string name) const
+{
+  const bool result = ImGui::Button(name.c_str());
+  printf(">> %d;\n", int(result));
+  return result;
+}
+
+GUIExecutionProvider::WindowsProvider GUIExecutionProvider::get_window(const std::string name) const
+{
+  return WindowsProvider::WindowsProvider(const_cast<GUIExecutionProvider &>(*this), name);
+}
+
+bool GUIExecutionProvider::WindowsProvider::is_open() const
+{
+  ImGui::End();
+  ImGui::EndFrame();
+
+  ImGui::Render();
+  glfw::pollEvents();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  const_cast<glfw::Window &>(data_).swapBuffers();
+
+  ImGui::SetCurrentContext(const_cast<ImGuiContext *>(gui_context_));
+
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+
+  const auto [x, y] = data_.getSize();
+  ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+  ImGui::SetNextWindowSize(ImVec2(x, y));
+
+  ImGui::Begin("Question Window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
+
+  return !data_.shouldClose();
+}
+
 }

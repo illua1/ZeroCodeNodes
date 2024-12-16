@@ -124,13 +124,13 @@ int main(int argc, char *argv[])
   [[maybe_unused]] const auto GLFW = glfw::init();
 
   glfw::Window window(640, 480, "Zero Code Nodes");
-
   glfw::makeContextCurrent(window);
 
   IMGUI_CHECKVERSION();
 
-  ImGui::CreateContext();
-  ImNodes::CreateContext();
+  ImGuiContext *gui_context = ImGui::CreateContext();
+  ImGui::SetCurrentContext(gui_context);
+  ImNodesContext *nodes_context = ImNodes::CreateContext();
 
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -440,9 +440,14 @@ int main(int argc, char *argv[])
 
     for (MetaTree &tree : session) {
       zcn::VirtualFileSystemProvider side_effect_provider;
-      std::vector<zcn::BaseProvider *> providers;
+      zcn::GUIExecutionProvider gui_provider(window, gui_context);
+      std::vector<zcn::BaseProvider *> providers = {&gui_provider};
       zcn::execute(tree.tree, tree.view_log, providers);
     }
+
+    glfw::makeContextCurrent(window);
+    ImGui::SetCurrentContext(gui_context);
+    ImNodes::SetCurrentContext(nodes_context);
   }
 
   {
