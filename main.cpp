@@ -191,7 +191,11 @@ int main(int argc, char *argv[])
       nlohmann::json load = nlohmann::json::parse(value);
 
       for (auto item : load) {
-        MetaTree tree(item["name"].get<std::string>(), item["internal_name"].get<std::string>());
+        const std::string name = item["name"].get<std::string>();
+        const std::string internal_name = item["internal_name"].get<std::string>();
+        tree_names.insert(name);
+        internal_tree_names.insert(internal_name);
+        MetaTree tree(name, internal_name);
         tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
         session.push_back(std::move(tree));
       }
@@ -215,7 +219,11 @@ int main(int argc, char *argv[])
       nlohmann::json load = nlohmann::json::parse(value);
 
       for (auto item : load) {
-        MetaTree tree(item["name"].get<std::string>(), item["internal_name"].get<std::string>());
+        const std::string name = item["name"].get<std::string>();
+        const std::string internal_name = item["internal_name"].get<std::string>();
+        local_storage_tree_names.insert(name);
+        local_storage_internal_tree_names.insert(internal_name);
+        MetaTree tree(name, internal_name);
         tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
         local_storage_session.push_back(std::move(tree));
       }
@@ -232,6 +240,8 @@ int main(int argc, char *argv[])
       // zcn::add_nodes_for_path(tree, std::string(path));
     }
   });
+
+  zcn::CacheProvider execution_ui_cache;
 
   while (!window.shouldClose()) {
 
@@ -441,7 +451,7 @@ int main(int argc, char *argv[])
     for (MetaTree &tree : session) {
       zcn::VirtualFileSystemProvider side_effect_provider;
       zcn::GUIExecutionProvider gui_provider(window, gui_context);
-      std::vector<zcn::BaseProvider *> providers = {&gui_provider};
+      std::vector<zcn::BaseProvider *> providers = {&gui_provider, &execution_ui_cache};
       zcn::execute(tree.tree, tree.view_log, providers);
     }
 

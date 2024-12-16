@@ -23,7 +23,16 @@ class QuestionNode : public Node {
   {
     const std::string question_label = context.get_input<std::string>("Вопрос");
     
-    const auto *windows_owner = context.context_provider<GUIExecutionProvider *>();
+    
+    auto *cache = context.context_provider<CacheProvider *>();
+    if (cache != nullptr) {
+      if (cache->data.find(question_label) != cache->data.end()) {
+        context.set_output("Ответ", ensure_type(DataType::Int, cache->data.at(question_label)));
+        return;
+      }
+    }
+
+    auto *windows_owner = context.context_provider<GUIExecutionProvider *>();
     if (windows_owner == nullptr) {
       return;
     }
@@ -33,8 +42,17 @@ class QuestionNode : public Node {
     while (window.is_open()) {
       if (window.button_try(question_label)) {
         context.set_output<int>("Ответ", 1);
+
+        if (cache != nullptr) {
+          cache->data[question_label] = 1;
+        }
+
         return;
       }
+    }
+
+    if (cache != nullptr) {
+      cache->data[question_label] = 0;
     }
 
     context.set_output<int>("Ответ", 0);

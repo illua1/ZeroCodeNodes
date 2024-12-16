@@ -137,6 +137,11 @@ class TreeExecutionContext {
   virtual void set_output(const std::string name, RData value) = 0;
 };
 
+class CacheProvider : public BaseProvider {
+ public:
+  std::unordered_map<std::string, RData> data;
+};
+
 class GUIExecutionProvider : public BaseProvider {
   glfw::Window &context_window_;
   ImGuiContext *gui_context_;

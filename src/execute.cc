@@ -126,6 +126,9 @@ RData BaseExecutionContext::get_input(DataType type, const std::string name)
     return tree_values_.at(socket_path);
   }
   const int output_uid = input_uid_to_output_uid_.at(socket_uid);
+  if (node_index_from_output_uid_.find(output_uid) == node_index_from_output_uid_.end()) {
+    return {};
+  }
   const int source_node_index = node_index_from_output_uid_.at(output_uid);
   const int source_node_uid = node_uids_[source_node_index];
   const std::string socket_path = node_socket_to_path(source_node_uid, output_uid);
@@ -371,9 +374,8 @@ GUIExecutionProvider::WindowsProvider::~WindowsProvider()
 
 bool GUIExecutionProvider::WindowsProvider::button_try(const std::string name) const
 {
-  const bool result = ImGui::Button(name.c_str());
-  printf(">> %d;\n", int(result));
-  return result;
+  const std::string label = name + "###" + name + __func__ + ";";
+  return ImGui::Button(label.c_str());
 }
 
 GUIExecutionProvider::WindowsProvider GUIExecutionProvider::get_window(const std::string name) const
