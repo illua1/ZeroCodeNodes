@@ -275,7 +275,7 @@ void execute(const TreePtr &tree, ExecuteLog &log, std::vector<BaseProvider *> p
   log.socket_value = std::move(socket_values);
 }
 
-std::string normalize_path(const std::string& messyPath) {
+static std::string normalize_path(const std::string& messyPath) {
     std::filesystem::path path(messyPath);
     std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(path);
     std::string npath = canonicalPath.make_preferred().string();

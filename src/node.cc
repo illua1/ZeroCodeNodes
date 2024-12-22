@@ -189,6 +189,7 @@ void register_node_types()
   register_node_int_input_node_type();
   register_node_float_input_node_type();
   register_node_string_input_node_type();
+  register_node_context_file_input_node_type();
 
   register_node_math_node_type();
   register_node_compare_value_node_type();

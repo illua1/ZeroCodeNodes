@@ -142,6 +142,11 @@ class CacheProvider : public BaseProvider {
   std::unordered_map<std::string, RData> data;
 };
 
+class ContextFilePathProvier : public BaseProvider {
+ public:
+  std::string data;
+};
+
 class GUIExecutionProvider : public BaseProvider {
   glfw::Window &context_window_;
   ImGuiContext *gui_context_;

@@ -83,6 +83,7 @@ target_link_libraries(internal_nodes PRIVATE internal_lib)
 target_link_libraries(internal_nodes PRIVATE ${EXTERNAL_DEPS})
 
 set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_context_file_input.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_file_write.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_foreach_file.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_int_input.cc

@@ -199,6 +199,7 @@ std::vector<std::string> all_node_types();
 void register_node_file_read_node_type();
 void register_node_file_write_node_type();
 void register_node_foreach_file_node_type();
+void register_node_context_file_input_node_type();
 
 void register_node_int_input_node_type();
 void register_node_float_input_node_type();
