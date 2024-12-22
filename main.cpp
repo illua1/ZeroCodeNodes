@@ -115,10 +115,8 @@ static void try_to_reg_ext(const std::string ext = ".zcn")
 
 int main(int argc, char *argv[])
 {
-  std::cout << argc << ";\n";
-  if (argc > 1) {
-    std::cout << ": " << argv[1] << ";\n";
-  } 
+  const bool is_execution = argc > 1;
+  const std::string execution_target = is_execution ? argv[1] : "";
 
   try_to_reg_ext(".zcn");
 
@@ -184,63 +182,87 @@ int main(int argc, char *argv[])
   
   std::vector<MetaTree> local_storage_session;
 
-  {
-    std::ifstream autosave_file("autosave.zcn");
-    if (autosave_file.is_open()) {
-      std::string value;
+  if (!is_execution) {
+    {
+      std::ifstream autosave_file("autosave.zcn");
+      if (autosave_file.is_open()) {
+        std::string value;
 
-      std::stringstream buffer;
-      buffer << autosave_file.rdbuf();
-      value = buffer.str();
+        std::stringstream buffer;
+        buffer << autosave_file.rdbuf();
+        value = buffer.str();
 
-      nlohmann::json load = nlohmann::json::parse(value);
+        nlohmann::json load = nlohmann::json::parse(value);
 
-      for (auto item : load) {
-        const std::string name = item["name"].get<std::string>();
-        const std::string internal_name = item["internal_name"].get<std::string>();
-        tree_names.insert(name);
-        internal_tree_names.insert(internal_name);
-        MetaTree tree(name, internal_name);
-        tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
-        session.push_back(std::move(tree));
+        for (auto item : load) {
+          const std::string name = item["name"].get<std::string>();
+          const std::string internal_name = item["internal_name"].get<std::string>();
+          tree_names.insert(name);
+          internal_tree_names.insert(internal_name);
+          MetaTree tree(name, internal_name);
+          tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
+          session.push_back(std::move(tree));
+        }
+
+        autosave_file.close();
+
+      } else {
+        session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+        session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
+        session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
       }
-
-      std::cout << load;
-
-      autosave_file.close();
-
-    } else {
-      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
-      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
-      session.push_back(std::move(MetaTree(new_tree_name(tree_names, "Дерево"), new_tree_name(internal_tree_names, "Tree"))));
     }
-  }
 
-  {
-    std::ifstream autosave_file(local_storage_path());
-    if (autosave_file.is_open()) {
-      std::string value;
+    {
+      std::ifstream autosave_file(local_storage_path());
+      if (autosave_file.is_open()) {
+        std::string value;
 
-      std::stringstream buffer;
-      buffer << autosave_file.rdbuf();
-      value = buffer.str();
+        std::stringstream buffer;
+        buffer << autosave_file.rdbuf();
+        value = buffer.str();
 
-      nlohmann::json load = nlohmann::json::parse(value);
+        nlohmann::json load = nlohmann::json::parse(value);
 
-      for (auto item : load) {
-        const std::string name = item["name"].get<std::string>();
-        const std::string internal_name = item["internal_name"].get<std::string>();
-        local_storage_tree_names.insert(name);
-        local_storage_internal_tree_names.insert(internal_name);
-        MetaTree tree(name, internal_name);
-        tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
-        local_storage_session.push_back(std::move(tree));
+        for (auto item : load) {
+          const std::string name = item["name"].get<std::string>();
+          const std::string internal_name = item["internal_name"].get<std::string>();
+          local_storage_tree_names.insert(name);
+          local_storage_internal_tree_names.insert(internal_name);
+          MetaTree tree(name, internal_name);
+          tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
+          local_storage_session.push_back(std::move(tree));
+        }
+
+        autosave_file.close();
+
       }
+    }
+  } else {
+    {
+      std::ifstream run_file(execution_target);
+      if (run_file.is_open()) {
+        std::string value;
 
-      std::cout << load;
+        std::stringstream buffer;
+        buffer << run_file.rdbuf();
+        value = buffer.str();
 
-      autosave_file.close();
+        nlohmann::json load = nlohmann::json::parse(value);
 
+        for (auto item : load) {
+          const std::string name = item["name"].get<std::string>();
+          const std::string internal_name = item["internal_name"].get<std::string>();
+          tree_names.insert(name);
+          internal_tree_names.insert(internal_name);
+          MetaTree tree(name, internal_name);
+          tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
+          session.push_back(std::move(tree));
+        }
+
+        run_file.close();
+
+      }
     }
   }
 
@@ -458,48 +480,60 @@ int main(int argc, char *argv[])
     window.swapBuffers();
 
     for (MetaTree &tree : session) {
-      zcn::VirtualFileSystemProvider file_system_provider;
+      zcn::FileSystemProvider file_system_provider;
+      zcn::VirtualFileSystemProvider vfile_system_provider;
       zcn::GUIExecutionProvider gui_provider(window, gui_context);
-      std::vector<zcn::BaseProvider *> providers = {&gui_provider, &execution_ui_cache, &file_system_provider};
+      std::vector<zcn::BaseProvider *> providers = {&gui_provider, &execution_ui_cache};
+      if (is_execution) {
+        providers.push_back(&file_system_provider);
+      } else {
+        providers.push_back(&vfile_system_provider);
+      }
       zcn::execute(tree.tree, tree.view_log, providers);
     }
 
     glfw::makeContextCurrent(window);
     ImGui::SetCurrentContext(gui_context);
     ImNodes::SetCurrentContext(nodes_context);
-  }
-
-  {
-    std::ofstream autosave_file("autosave.zcn");
-    if (autosave_file.is_open()) {
-      nlohmann::json save;
-      for (MetaTree &tree : session) {
-        nlohmann::json tree_info;
-        tree_info["name"] = tree.name;
-        tree_info["internal_name"] = tree.internal_name;
-        tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
-        save.push_back(tree_info);
-      }
-      autosave_file << save.dump(2);
-      autosave_file.close();
-
+    
+    if (is_execution) {
+      break;
     }
   }
-  
-  {
-    std::ofstream autosave_file(local_storage_path());
-    if (autosave_file.is_open()) {
-      nlohmann::json save;
-      for (MetaTree &tree : local_storage_session) {
-        nlohmann::json tree_info;
-        tree_info["name"] = tree.name;
-        tree_info["internal_name"] = tree.internal_name;
-        tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
-        save.push_back(tree_info);
-      }
-      autosave_file << save.dump(2);
-      autosave_file.close();
 
+  if (!is_execution) {
+    {
+      std::ofstream autosave_file("autosave.zcn");
+      if (autosave_file.is_open()) {
+        nlohmann::json save;
+        for (MetaTree &tree : session) {
+          nlohmann::json tree_info;
+          tree_info["name"] = tree.name;
+          tree_info["internal_name"] = tree.internal_name;
+          tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
+          save.push_back(tree_info);
+        }
+        autosave_file << save.dump(2);
+        autosave_file.close();
+
+      }
+    }
+    
+    {
+      std::ofstream autosave_file(local_storage_path());
+      if (autosave_file.is_open()) {
+        nlohmann::json save;
+        for (MetaTree &tree : local_storage_session) {
+          nlohmann::json tree_info;
+          tree_info["name"] = tree.name;
+          tree_info["internal_name"] = tree.internal_name;
+          tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
+          save.push_back(tree_info);
+        }
+        autosave_file << save.dump(2);
+        autosave_file.close();
+
+      }
     }
   }
 
