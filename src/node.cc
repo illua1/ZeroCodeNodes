@@ -214,6 +214,7 @@ void register_node_types()
   register_node_output_node_type();
 
   register_node_question_node_type();
+  register_node_question_button_node_type();
   
   register_node_end_node_type();
 }

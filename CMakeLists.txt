@@ -56,13 +56,20 @@ FetchContent_Declare(imnodes
 FetchContent_MakeAvailable(imnodes)
 set(IMNODES_STANDALONE_PROJECT OFF CACHE BOOL "" FORCE)
 
+set(Boost_USE_STATIC_LIBS ON) 
+set(Boost_USE_MULTITHREADED OFF)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost COMPONENTS regex)
+include_directories(${Boost_INCLUDE_DIRS})
+
 set(EXTERNAL_DEPS OpenGL::GL
                   GLEW::GLEW
                   imgui::imgui
                   Mathter::Mathter
                   nlohmann_json::nlohmann_json
                   GLFWPP
-                  imnodes)
+                  imnodes
+                  ${Boost_LIBRARIES})
 
 set(INTERNAL_LIB ${CMAKE_SOURCE_DIR}/src/runtime_type.cc)
 add_library(internal_lib STATIC ${INTERNAL_LIB})
@@ -100,6 +107,7 @@ set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_end.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_loop.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_switch.cc
+              ${CMAKE_SOURCE_DIR}/src/nodes/node_question_button.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_question.cc
               )
 add_library(nodes_lib STATIC ${NODES_LIB})

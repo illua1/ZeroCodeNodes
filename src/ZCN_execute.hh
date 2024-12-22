@@ -151,12 +151,16 @@ class GUIExecutionProvider : public BaseProvider {
     GUIExecutionProvider &owner_;
     glfw::Window data_;
     ImGuiContext *gui_context_;
+    
+    std::unordered_map<std::string, std::string> text_map_;
+    
    public:
     WindowsProvider(GUIExecutionProvider &owner, const std::string &name);
     WindowsProvider(WindowsProvider &&other) : owner_(other.owner_), data_(std::move(other.data_)), gui_context_(other.gui_context_) { other.gui_context_ = nullptr; }
     ~WindowsProvider();
     bool is_open() const;
     bool button_try(const std::string name) const;
+    std::string text_try(const std::string name) const;
   };
 
   GUIExecutionProvider(glfw::Window &context_window, ImGuiContext *gui_context) : context_window_(context_window), gui_context_(gui_context) {};

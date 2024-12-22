@@ -389,6 +389,20 @@ GUIExecutionProvider::WindowsProvider::WindowsProvider(GUIExecutionProvider &own
   ImGui_ImplGlfw_InitForOpenGL(data_, true);
   ImGui_ImplOpenGL3_Init();
 
+  static const ImWchar ranges[] =
+  {
+    0x0020, 0x00FF, // Basic Latin + Latin Supplement
+    0x0400, 0x044F, // Cyrillic
+    0,
+  };
+
+  ImFontConfig font_config; 
+  font_config.OversampleH = 1;
+  font_config.OversampleV = 1; 
+  font_config.PixelSnapH = 1;
+
+  io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Tahoma.ttf", 16.0f, &font_config, ranges);
+
   // glfwSetMouseButtonCallback(window, []);
   // glfwSetCursorPosCallback(window, set_cursor_pos_callback);
 
@@ -419,6 +433,21 @@ bool GUIExecutionProvider::WindowsProvider::button_try(const std::string name) c
 {
   const std::string label = name + "###" + name + __func__ + ";";
   return ImGui::Button(label.c_str());
+}
+
+std::string GUIExecutionProvider::WindowsProvider::text_try(const std::string name) const
+{
+  const std::string label = name + "###" + name + __func__ + ";";
+  
+  std::string &value = const_cast<GUIExecutionProvider::WindowsProvider *>(this)->text_map_[name];
+  
+  char buffer[500];
+  std::strncpy(buffer, value.c_str(), std::min<int>(sizeof(buffer), value.size() + 1));
+  if (ImGui::InputText(label.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags())) {
+    value = std::string(std::string_view(buffer));
+  }
+
+  return value;
 }
 
 GUIExecutionProvider::WindowsProvider GUIExecutionProvider::get_window(const std::string name) const

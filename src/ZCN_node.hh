@@ -228,6 +228,7 @@ void register_node_input_node_type();
 void register_node_output_node_type();
 
 void register_node_question_node_type();
+void register_node_question_button_node_type();
 
 void register_node_end_node_type();
 

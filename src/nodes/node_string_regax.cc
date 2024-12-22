@@ -1,6 +1,8 @@
 
 #include "../ZCN_node.hh"
 
+#include <boost/regex.hpp> 
+
 #include <string>
 #include <locale>
 #include <memory>
@@ -41,15 +43,12 @@ class StringRegax : public Node {
 
     std::basic_stringstream<wchar_t> stream;
     try {
-      std::regex_replace(std::ostreambuf_iterator<wchar_t>(stream),
-                         textw.begin(),
-                         textw.end(),
-                         std::wregex(std::move(patterw)),
-                         std::move(new_partw));
+      context.set_output<std::string>("Текст", converter.to_bytes(boost::regex_replace(textw, boost::wregex(patterw), new_partw)));
+      return;
     }
-    catch (const std::regex_error &/*e*/) {}
+    catch (const boost::regex_error &/*e*/) {}
 
-    context.set_output<std::string>("Текст", converter.to_bytes(stream.str()));
+    context.set_output<std::string>("Текст", "");
   }
 };
 
