@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -8,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 
 #include "ZCN_execute.hh"
@@ -273,30 +275,71 @@ void execute(const TreePtr &tree, ExecuteLog &log, std::vector<BaseProvider *> p
   log.socket_value = std::move(socket_values);
 }
 
-RData FileSystemProvider::get_from_path(std::string path)
+std::string normalize_path(const std::string& messyPath) {
+    std::filesystem::path path(messyPath);
+    std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(path);
+    std::string npath = canonicalPath.make_preferred().string();
+    return npath;
+}
+
+RData FileSystemProvider::get_from_path(std::string path) const
 {
-  std::ifstream inFile;
-  inFile.open(path);
+  const std::string normalized_path = normalize_path(path);
 
-  std::string stream;
-  inFile >> stream;
+  if (!std::filesystem::exists(normalized_path)) {
+    return "";
+  }
 
-  return stream;
+  std::stringstream buffer;
+  std::ifstream file_reader(path);
+
+  buffer << file_reader.rdbuf();
+  return buffer.str();
 }
 
 void FileSystemProvider::set_for_path(std::string path, RData data)
 {
-  
+  const std::string normalized_path = normalize_path(path);
+
+  std::ofstream opened_file(normalized_path);
+  if (opened_file.is_open()) {
+    opened_file << std::get<std::string>(ensure_type(DataType::Text, data));
+    opened_file.close();
+  }
 }
 
-RData VirtualFileSystemProvider::get_from_path(std::string path)
+RData VirtualFileSystemProvider::get_from_path(std::string path) const
 {
-  return int(1);
+  const std::string normalized_path = normalize_path(path);
+
+  if (!std::filesystem::exists(normalized_path)) {
+    return std::string("");
+  }
+
+  if (this->file_overide.find(path) != this->file_overide.end()) {
+    return this->file_overide.at(path);
+  }
+
+  std::stringstream buffer;
+  std::ifstream file_reader(path);
+
+  buffer << file_reader.rdbuf();
+  std::string data = buffer.str();
+
+  const_cast<VirtualFileSystemProvider *>(this)->file_overide[path] = data;
+
+  return data;
 }
 
 void VirtualFileSystemProvider::set_for_path(std::string path, RData data)
 {
-  
+  const std::string normalized_path = normalize_path(path);
+
+  if (!std::filesystem::exists(normalized_path)) {
+    return;
+  }
+
+  const_cast<VirtualFileSystemProvider *>(this)->file_overide[path] = std::get<std::string>(ensure_type(DataType::Text, data));
 }
 
 RData SubTreeExecutionProvider::get_input(DataType type, const std::string name) const

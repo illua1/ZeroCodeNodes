@@ -5,6 +5,7 @@
 #include <numeric>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 
 #include "src/ZCN_execute.hh"
@@ -187,7 +188,11 @@ int main(int argc, char *argv[])
     std::ifstream autosave_file("autosave.zcn");
     if (autosave_file.is_open()) {
       std::string value;
-      autosave_file >> value;
+
+      std::stringstream buffer;
+      buffer << autosave_file.rdbuf();
+      value = buffer.str();
+
       nlohmann::json load = nlohmann::json::parse(value);
 
       for (auto item : load) {
@@ -215,7 +220,11 @@ int main(int argc, char *argv[])
     std::ifstream autosave_file(local_storage_path());
     if (autosave_file.is_open()) {
       std::string value;
-      autosave_file >> value;
+
+      std::stringstream buffer;
+      buffer << autosave_file.rdbuf();
+      value = buffer.str();
+
       nlohmann::json load = nlohmann::json::parse(value);
 
       for (auto item : load) {
@@ -449,9 +458,9 @@ int main(int argc, char *argv[])
     window.swapBuffers();
 
     for (MetaTree &tree : session) {
-      zcn::VirtualFileSystemProvider side_effect_provider;
+      zcn::VirtualFileSystemProvider file_system_provider;
       zcn::GUIExecutionProvider gui_provider(window, gui_context);
-      std::vector<zcn::BaseProvider *> providers = {&gui_provider, &execution_ui_cache};
+      std::vector<zcn::BaseProvider *> providers = {&gui_provider, &execution_ui_cache, &file_system_provider};
       zcn::execute(tree.tree, tree.view_log, providers);
     }
 
@@ -471,7 +480,7 @@ int main(int argc, char *argv[])
         tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
         save.push_back(tree_info);
       }
-      autosave_file << save.dump();
+      autosave_file << save.dump(2);
       autosave_file.close();
 
     }
@@ -488,7 +497,7 @@ int main(int argc, char *argv[])
         tree_info["topology"] = nlohmann::json::parse(zcn::tree_to_json(tree.tree));
         save.push_back(tree_info);
       }
-      autosave_file << save.dump();
+      autosave_file << save.dump(2);
       autosave_file.close();
 
     }

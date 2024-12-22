@@ -111,7 +111,7 @@ std::string tree_to_json(const TreePtr &tree)
     }
   });
 
-  return obj.dump(); 
+  return obj.dump(2); 
 }
 
 TreePtr tree_from_json(const std::string &json_text)

@@ -24,11 +24,11 @@ struct ExecuteLog {
   std::unordered_map<std::string, RData> socket_value;
 };
 
-class SideEffectReciver {
+class SideEffectReciver : public BaseProvider {
  public:
-  virtual ~SideEffectReciver() = default;
+  ~SideEffectReciver() override = default;
 
-  virtual RData get_from_path(std::string path) = 0;
+  virtual RData get_from_path(std::string path) const = 0;
   virtual void set_for_path(std::string path, RData data) = 0;
 };
 
@@ -36,7 +36,7 @@ class FileSystemProvider : public SideEffectReciver {
  public:
   ~FileSystemProvider() override = default;
 
-  RData get_from_path(std::string path) override;
+  RData get_from_path(std::string path) const override;
   void set_for_path(std::string path, RData data) override;
 };
 
@@ -46,7 +46,7 @@ class VirtualFileSystemProvider : public SideEffectReciver {
 
   ~VirtualFileSystemProvider() override = default;
 
-  RData get_from_path(std::string path) override;
+  RData get_from_path(std::string path) const override;
   void set_for_path(std::string path, RData data) override;
 };
 

@@ -1,1 +1,162 @@
-[{"internal_name":"Tree.1","name":"Дерево","topology":{"links":[[302,151]],"links_uid":[600],"node_labels":["Веха","Повтор"],"node_names":["Веха.1","Повтор.1"],"node_sockets_uid":[[151],[451,302]],"nodes":[null,{"loop_body_tree_name_":"Дерево.1"}],"nodes_uid":[0,300],"total_uid":601,"values":{"nodes[0].[151]":{"data":"","type":"Text"},"nodes[300].[451]":{"data":0,"type":"Int"}}}},{"internal_name":"Tree","name":"Дерево.1","topology":{"links":[[302,151]],"links_uid":[600],"node_labels":["Вывод","Вопрос"],"node_names":["Вывод.1","Вопрос.1"],"node_sockets_uid":[[151],[451,302]],"nodes":[{"data_type_index_":0},null],"nodes_uid":[0,300],"total_uid":601,"values":{"nodes[0].[151]":{"data":0,"type":"Int"},"nodes[300].[451]":{"data":"Ахаха??","type":"Text"}}}}]
+[
+  {
+    "internal_name": "Tree",
+    "name": "Дерево",
+    "topology": {
+      "links": [
+        [
+          302,
+          751
+        ],
+        [
+          602,
+          151
+        ]
+      ],
+      "links_uid": [
+        1203,
+        1204
+      ],
+      "node_labels": [
+        "Веха",
+        "Повтор",
+        "Прочитать файл",
+        "Соеденить строки"
+      ],
+      "node_names": [
+        "Веха.1",
+        "Повтор.1",
+        "Прочитать файл.1",
+        "Соеденить строки.1"
+      ],
+      "node_sockets_uid": [
+        [
+          151
+        ],
+        [
+          451,
+          302
+        ],
+        [
+          751,
+          602
+        ],
+        [
+          1051,
+          1052,
+          903
+        ]
+      ],
+      "nodes": [
+        null,
+        {
+          "loop_body_tree_name_": "Дерево.1"
+        },
+        null,
+        null
+      ],
+      "nodes_uid": [
+        0,
+        300,
+        600,
+        900
+      ],
+      "total_uid": 1205,
+      "values": {
+        "nodes[0].[151]": {
+          "data": "",
+          "type": "Text"
+        },
+        "nodes[300].[451]": {
+          "data": 1,
+          "type": "Int"
+        },
+        "nodes[600].[751]": {
+          "data": "F:\\ZeroCodeNodes\\test.txt",
+          "type": "Text"
+        },
+        "nodes[900].[1051]": {
+          "data": "",
+          "type": "Text"
+        },
+        "nodes[900].[1052]": {
+          "data": "",
+          "type": "Text"
+        }
+      }
+    }
+  },
+  {
+    "internal_name": "Tree.1",
+    "name": "Дерево.1",
+    "topology": {
+      "links": [
+        [
+          601,
+          151
+        ],
+        [
+          601,
+          451
+        ]
+      ],
+      "links_uid": [
+        900,
+        901
+      ],
+      "node_labels": [
+        "Записать в",
+        "Вывод",
+        "Текст"
+      ],
+      "node_names": [
+        "Записать в.1",
+        "Вывод.1",
+        "Текст.1"
+      ],
+      "node_sockets_uid": [
+        [
+          151,
+          152
+        ],
+        [
+          451
+        ],
+        [
+          601
+        ]
+      ],
+      "nodes": [
+        null,
+        {
+          "data_type_index_": 2
+        },
+        null
+      ],
+      "nodes_uid": [
+        0,
+        300,
+        600
+      ],
+      "total_uid": 902,
+      "values": {
+        "nodes[0].[151]": {
+          "data": "F:\\ZeroCodeNodes\\test.txt",
+          "type": "Text"
+        },
+        "nodes[0].[152]": {
+          "data": "AAAA",
+          "type": "Text"
+        },
+        "nodes[300].[451]": {
+          "data": "F:\\ZeroCodeNodes\\test.txt",
+          "type": "Text"
+        },
+        "nodes[600].Текст": {
+          "data": "F:\\ZeroCodeNodes\\test.txt",
+          "type": "Text"
+        }
+      }
+    }
+  }
+]

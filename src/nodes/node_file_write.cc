@@ -15,14 +15,18 @@ class FileWrite : public Node {
 
   void declare(DeclarationContext &decl) const override
   {
-    decl.add_input<float>("Значение");
+    decl.add_input<std::string>("Путь");
     decl.add_input<std::string>("Текст");
   }
 
   void execute(ExecutionContext &context) const override
   {
-    context.get_input<float>("Значение");
-    context.get_input<std::string>("Текст");
+    auto *file_context = context.context_provider<SideEffectReciver *>();
+    if (file_context == nullptr) {
+      return;
+    }
+
+    file_context->set_for_path(context.get_input<std::string>("Путь"), context.get_input<std::string>("Текст"));
   }
 };
 

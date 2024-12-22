@@ -21,8 +21,9 @@ class FileInputNode : public Node {
 
   void execute(ExecutionContext &context) const override
   {
-    FileSystemProvider *file_context = nullptr;
-    if (file_context = dynamic_cast<FileSystemProvider *>(&context); file_context == nullptr) {
+    const auto *file_context = context.context_provider<const SideEffectReciver *>();
+    if (file_context == nullptr) {
+      context.set_output<std::string>("Текст", "");
       return;
     }
 
