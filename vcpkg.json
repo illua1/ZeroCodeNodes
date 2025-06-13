@@ -12,6 +12,10 @@
       "host": true
     },
     {
+      "name": "boost",
+      "host": true
+    },
+    {
       "name": "glfw3",
       "host": true
     },

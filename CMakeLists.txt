@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 
-set(CMAKE_BUILD_TYPE "DEBUG")
+# set(CMAKE_BUILD_TYPE "DEBUG")
+set(CMAKE_BUILD_TYPE "RELEASE")
 
 set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
@@ -8,9 +9,10 @@ set(VCPKG_LIBRARY_LINKAGE static)
 
 set(VCPKG_CMAKE_SYSTEM_NAME Windows)
 
-set(VCPKG_BUILD_TYPE debug)
+# set(VCPKG_BUILD_TYPE debug)
+set(VCPKG_BUILD_TYPE release)
 
-include("F:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+include("E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 project(ZeroCodeNodes)
 
@@ -24,14 +26,18 @@ set(MSVC_ASAN ON)
 
 add_executable(Main main.cpp)
 
-find_package(Mathter REQUIRED)
+find_package(Mathter CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(imgui REQUIRED)
-find_package(GLEW REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(GLEW CONFIG REQUIRED)
 
 set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
-find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
+message(STATUS "Mathter found----------: ${Mathter_FOUND}")
+message(STATUS "OpenGL found---------: ${OpenGL_FOUND}")
+message(STATUS "imgui found----------: ${imgui_FOUND}")
+message(STATUS "GLEW found-: ${GLEW_FOUND}")
 
 include(FetchContent)
 
@@ -79,8 +85,8 @@ set(INTERNAL_NODES ${CMAKE_SOURCE_DIR}/src/execute.cc
                    ${CMAKE_SOURCE_DIR}/src/node_json.cc
                    ${CMAKE_SOURCE_DIR}/src/node_draw.cc)
 add_library(internal_nodes STATIC ${INTERNAL_NODES})
-target_link_libraries(internal_nodes PRIVATE internal_lib)
 target_link_libraries(internal_nodes PRIVATE ${EXTERNAL_DEPS})
+target_link_libraries(internal_nodes PRIVATE internal_lib)
 
 set(NODES_LIB ${CMAKE_SOURCE_DIR}/src/nodes/node_file_read.cc
               ${CMAKE_SOURCE_DIR}/src/nodes/node_context_file_input.cc
@@ -115,4 +121,7 @@ add_library(nodes_lib STATIC ${NODES_LIB})
 target_link_libraries(nodes_lib PRIVATE internal_nodes)
 target_link_libraries(nodes_lib PRIVATE ${EXTERNAL_DEPS})
 
-target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS} internal_lib nodes_lib)
+target_link_libraries(Main PRIVATE ${EXTERNAL_DEPS}
+                                   internal_nodes
+                                   internal_lib
+                                   nodes_lib)

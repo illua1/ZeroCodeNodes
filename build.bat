@@ -27,16 +27,21 @@ if "%clean%" == "1" (
   )
 )
 
+REM Release
+REM Debug
+
 if "%prepare%" == "1" (
   mkdir %build_folder%
   cd %build_folder%
-  cmake ..
+  REM make --trace-expand ..
+  cmake .. -DCMAKE_BUILD_TYPE=Release
   cd ..
 )
 
 if "%build%" == "1" (
   if exist %build_folder% (
-    cmake --build %build_folder%
+    -- cmake --build %build_folder% --verbose
+    cmake --build %build_folder% --config Release
   ) else (
     echo Run "make" first to setup project to build.
   )
