@@ -68,7 +68,7 @@ class LoopNode : public Node {
 
 
     std::unordered_map<std::string, RData> next_inputs;
-    for (int index = 0; index < repeats; index++) {
+    for ([[maybe_unused]] int repeat_index = 0; repeat_index < repeats; repeat_index++) {
       ExecuteLog log;
       zcn::execute(tree, log, context_stack);
       for (int index = 0; index < std::min(input_items.size(), output_items.size()); index++) {

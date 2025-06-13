@@ -371,7 +371,7 @@ void SubTreeExecutionProvider::set_output(const std::string name, RData value)
 // }
 
 GUIExecutionProvider::WindowsProvider::WindowsProvider(GUIExecutionProvider &owner, const std::string &name) : owner_(owner),
-    data_(glfw::Window(100, 50, name.c_str())), gui_context_(ImGui::CreateContext())
+    data_(glfw::Window(400, 200, name.c_str())), gui_context_(ImGui::CreateContext())
 {
   glfw::makeContextCurrent(data_);
 
@@ -382,6 +382,7 @@ GUIExecutionProvider::WindowsProvider::WindowsProvider(GUIExecutionProvider &own
   ImGui::StyleColorsDark();
 
   ImGui::GetStyle().WindowRounding = 0.0f;
+  ImGui::StyleColorsLight();
 
   ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
   ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -410,6 +411,10 @@ GUIExecutionProvider::WindowsProvider::WindowsProvider(GUIExecutionProvider &own
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
   ImGui::Begin("Question Window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
+  
+  
+  ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+			ImVec2 vMax = ImGui::GetWindowContentRegionMax();
 }
 
 GUIExecutionProvider::WindowsProvider::~WindowsProvider()
@@ -429,10 +434,37 @@ GUIExecutionProvider::WindowsProvider::~WindowsProvider()
   ImGui::SetCurrentContext(owner_.gui_context_);
 }
 
+int GUIExecutionProvider::WindowsProvider::button_or_try(const std::string name) const
+{
+  ImGui::LabelText(name.c_str(), name.c_str());
+
+
+  const std::string yes = "Да";
+  if (ImGui::Button(yes.c_str())) {
+    return 1;
+  }
+  
+  const std::string no = "Нет";
+  if (ImGui::Button(no.c_str())) {
+    return -1;
+  }
+
+  this->data_.setPos(400, 400);
+  // this->data_.setSize(500, 500);
+  
+  return 0;
+}
+
 bool GUIExecutionProvider::WindowsProvider::button_try(const std::string name) const
 {
-  const std::string label = name + "###" + name + __func__ + ";";
-  return ImGui::Button(label.c_str());
+  ImGui::LabelText(name.c_str(), name.c_str());
+
+  const bool result = ImGui::Button("Продолжить");
+
+  this->data_.setPos(400, 400);
+  // this->data_.setSize(500, 500);
+
+  return result;
 }
 
 std::string GUIExecutionProvider::WindowsProvider::text_try(const std::string name) const
@@ -447,6 +479,9 @@ std::string GUIExecutionProvider::WindowsProvider::text_try(const std::string na
     value = std::string(std::string_view(buffer));
   }
 
+  this->data_.setPos(400, 400);
+  // this->data_.setSize(500, 500);
+  
   return value;
 }
 

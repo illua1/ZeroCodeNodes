@@ -466,13 +466,13 @@ class ImNodesOverlayDeclarationContext : public DeclarationContext {
     const ImU32 background_color = [&]() -> ImU32 {
       switch (type) {
         case DataType::Int: {
-          return IM_COL32(40, 40, 140, overlay_alpha);
+          return IM_COL32(0, 0, 0, overlay_alpha);
         }
         case DataType::Float: {
-          return IM_COL32(140, 40, 40, overlay_alpha);
+          return IM_COL32(0, 0, 0, overlay_alpha);
         }
         case DataType::Text: {
-          return IM_COL32(40, 140, 40, overlay_alpha);
+          return IM_COL32(0, 0, 0, overlay_alpha);
         }
       }
       return IM_COL32(0, 0, 0, 256);

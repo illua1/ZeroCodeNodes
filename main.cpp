@@ -113,6 +113,25 @@ static void try_to_reg_ext(const std::string ext = ".zcn")
   RegCloseKey(hkey);
 }
 
+class UsedTreeDeclarationContext : public zcn::DeclarationContext {
+ public:
+  virtual ~UsedTreeDeclarationContext() = default;
+
+ private:
+  std::unordered_set<std::string> &used_trees_;
+
+ public:
+  UsedTreeDeclarationContext(std::unordered_set<std::string> &used_trees) : used_trees_(used_trees) {}
+
+  virtual void add_input(zcn::DataType type, std::string name) {};
+  virtual void add_output(zcn::DataType type, std::string name) {};
+  virtual std::string add_tree_selector(const std::string name, std::string tree_name) {
+    used_trees_.insert(tree_name);
+    return tree_name;
+  };
+  virtual void add_data(zcn::DataType type, std::string name) {};
+};
+
 int main(int argc, char *argv[])
 {
   const bool is_execution = argc > 1;
@@ -130,10 +149,13 @@ int main(int argc, char *argv[])
   ImGuiContext *gui_context = ImGui::CreateContext();
   ImGui::SetCurrentContext(gui_context);
   ImNodesContext *nodes_context = ImNodes::CreateContext();
+  ImNodes::StyleColorsLight();
+
+  ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(0, 0, 0, 255));
 
   ImGuiIO &io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  ImGui::StyleColorsDark();
+  ImGui::StyleColorsLight();
 
   ImFontConfig font_config; 
   font_config.OversampleH = 1;
@@ -151,6 +173,7 @@ int main(int argc, char *argv[])
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init(glsl_version.c_str());
+
 
   ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick | ImNodesAttributeFlags_EnableLinkCreationOnSnap);
 
@@ -202,6 +225,12 @@ int main(int argc, char *argv[])
           MetaTree tree(name, internal_name);
           tree.tree = std::move(zcn::tree_from_json(item["topology"].dump()));
           session.push_back(std::move(tree));
+        }
+
+        for (MetaTree &tree : session) {
+          ImNodes::EditorContextSet(tree.context);
+          const std::string tree_file = "zcn_autosave_" + tree.name + ".ini";
+          ImNodes::LoadCurrentEditorStateFromIniFile(tree_file.c_str());
         }
 
         autosave_file.close();
@@ -479,7 +508,21 @@ int main(int argc, char *argv[])
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     window.swapBuffers();
 
+    std::unordered_set<std::string> used_trees;
+    UsedTreeDeclarationContext usage_check(used_trees);
+
     for (MetaTree &tree : session) {
+      for (const auto &node : tree.tree->nodes) {
+        node->declare(usage_check);
+      }
+    }
+
+    for (MetaTree &tree : session) {
+      
+      if (used_trees.find(tree.name) != used_trees.end()) {
+        continue;
+      }
+      
       zcn::FileSystemProvider file_system_provider;
       zcn::VirtualFileSystemProvider vfile_system_provider;
       zcn::GUIExecutionProvider gui_provider(window, gui_context);
@@ -516,6 +559,11 @@ int main(int argc, char *argv[])
         autosave_file << save.dump(2);
         autosave_file.close();
 
+        for (MetaTree &tree : session) {
+          ImNodes::EditorContextSet(tree.context);
+          const std::string tree_file = "zcn_autosave_" + tree.name + ".ini";
+          ImNodes::SaveCurrentEditorStateToIniFile(tree_file.c_str());
+        }
       }
     }
     
